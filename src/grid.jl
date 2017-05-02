@@ -2,10 +2,14 @@
 abstract type Grid{D} end
 
 immutable Grid2d{M,N} <: Grid{2}
+    x::Vector
+    y::Vector
 end
 
-function Grid2d(M,N)
-    Grid2d{M,N}()
+function Grid2d(M, N; x1=0, x2=2π, y1=0, y2=2π)
+    x = [x1 + i*(x2-x1)/M for i in 0:M-1]
+    y = [y1 + j*(y2-y1)/N for j in 0:N-1]
+    Grid2d{M,N}(x, y)
 end
 
 

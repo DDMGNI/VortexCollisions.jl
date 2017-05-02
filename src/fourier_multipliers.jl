@@ -9,7 +9,7 @@ immutable FourierMultipliers{RT,CT}
     normal::RT
 end
 
-function FourierMultipliers(RT, M, N, mcut, ncut)
+function FourierMultipliers{M,N}(RT, grid::Grid2d{M,N}; mcut=NaN, ncut=NaN)
     ℳ = M
     𝒩 = div(N,2)+1
 
@@ -37,18 +37,22 @@ end
 function cutoff_frequencies(T, ℳ, 𝒩, mcut, ncut)
     χ = ones(T, ℳ, 𝒩)
 
-    for n in 1:𝒩
-        for m in mcut+1:div(ℳ+1,2)
-            χ[m, n] = 0
-        end
-        for m in mcut-1:div(ℳ,2)
-            χ[end-m, n] = 0
+    if !isnan(mcut)
+        for n in 1:𝒩
+            for m in mcut+1:div(ℳ+1,2)
+                χ[m, n] = 0
+            end
+            for m in mcut-1:div(ℳ,2)
+                χ[end-m, n] = 0
+            end
         end
     end
 
-    for n in ncut+1:𝒩
-        for m in 1:ℳ
-            χ[m,n] = 0
+    if !isnan(ncut)
+        for n in ncut+1:𝒩
+            for m in 1:ℳ
+                χ[m,n] = 0
+            end
         end
     end
 
@@ -69,9 +73,11 @@ function inverse_laplacian(T, ℳ, 𝒩)
 
     Δ⁻¹ = zeros(T, ℳ, 𝒩)
 
-    for s in 2:𝒩
-        for r in 2:ℳ
-            Δ⁻¹[r,s] = - 1 / (m[r]^2 + n[s]^2)
+    for s in 1:𝒩
+        for r in 1:ℳ
+            if !(r == 1 && s == 1)
+                Δ⁻¹[r,s] = - 1 / (m[r]^2 + n[s]^2)
+            end
         end
     end
 
@@ -86,8 +92,8 @@ function gradient(T, ℳ, 𝒩)
     D₁ = zeros(T, ℳ, 𝒩)
     D₂ = zeros(T, ℳ, 𝒩)
 
-    for s in 2:𝒩
-        for r in 2:ℳ
+    for s in 1:𝒩
+        for r in 1:ℳ
             D₁[r,s] = 1im * m[r]
             D₂[r,s] = 1im * n[s]
         end
