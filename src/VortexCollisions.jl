@@ -9,6 +9,10 @@ module VortexCollisions
 
     include("fourier_multipliers.jl")
 
+    export fourier_quadrature
+
+    include("fourier_quadrature.jl")
+
     export CollisionOperator
 
     include("collision_operator.jl")
