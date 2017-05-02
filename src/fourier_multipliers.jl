@@ -3,10 +3,9 @@ immutable FourierMultipliers{RT,CT}
     ℳ
     𝒩
     χ::Matrix{RT}
-    μ::Matrix{RT}
+    μ::Matrix{CT}
     Δ⁻¹::Matrix{RT}
     D::Vector{Matrix{CT}}
-    normal::RT
 end
 
 function FourierMultipliers{M,N}(RT, grid::Grid2d{M,N}; mcut=NaN, ncut=NaN)
@@ -16,13 +15,11 @@ function FourierMultipliers{M,N}(RT, grid::Grid2d{M,N}; mcut=NaN, ncut=NaN)
     CT = typeof(complex(one(RT),0))
 
     χ   = cutoff_frequencies(RT, ℳ, 𝒩, mcut, ncut)
-    μ   = multiplicity(RT, ℳ, 𝒩)
+    μ   = multiplicity(CT, ℳ, 𝒩)
     Δ⁻¹ = inverse_laplacian(RT, ℳ, 𝒩)
     D   = gradient(CT, ℳ, 𝒩)
 
-    normal = 4π^2 / M^2 / N^2
-
-    FourierMultipliers{RT,CT}(ℳ, 𝒩, χ, μ, Δ⁻¹, D, normal)
+    FourierMultipliers{RT,CT}(ℳ, 𝒩, χ, μ, Δ⁻¹, D)
 end
 
 function Base.show{RT,CT}(io::IO, fmp::FourierMultipliers{RT,CT})
