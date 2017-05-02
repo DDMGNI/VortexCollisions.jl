@@ -1,10 +1,7 @@
 
-immutable Grid{M,N}
-
-end
-
-
-immutable FourierMultipliers{RT, CT}
+immutable FourierMultipliers{RT,CT}
+    ℳ
+    𝒩
     χ::Matrix{RT}
     μ::Matrix{RT}
     Δ⁻¹::Matrix{RT}
@@ -12,26 +9,28 @@ immutable FourierMultipliers{RT, CT}
     normal::RT
 end
 
-function FourierMultipliers(M, N, mcut, ncut)
+function FourierMultipliers(RT, M, N, mcut, ncut)
     ℳ = M
     𝒩 = div(N,2)+1
 
-    RT = Float64
-    CT = Complex128
+    CT = typeof(complex(one(RT),0))
 
     χ   = cutoff_frequencies(RT, ℳ, 𝒩, mcut, ncut)
     μ   = multiplicity(RT, ℳ, 𝒩)
-    Δ⁻¹ = laplacian(RT, M, N, ℳ, 𝒩)
-    D   = gradient(CT, M, N, ℳ, 𝒩)
+    Δ⁻¹ = inverse_laplacian(RT, ℳ, 𝒩)
+    D   = gradient(CT, ℳ, 𝒩)
 
     normal = 4π^2 / M^2 / N^2
 
-    # println(χ)
-    # println(μ)
-    # println(Δ⁻¹)
-    # println(D)
+    FourierMultipliers{RT,CT}(ℳ, 𝒩, χ, μ, Δ⁻¹, D, normal)
+end
 
-    FourierMultipliers{RT,CT}(χ, μ, Δ⁻¹, D, normal)
+function Base.show{RT,CT}(io::IO, fmp::FourierMultipliers{RT,CT})
+    print(io, "Fourier Multipliers for data types (", RT, ",", CT, ") with (", fmp.ℳ, ",", fmp.𝒩, ") frequencies.\n")
+    print(io, "   Cut off frequencies: ", fmp.χ, "\n")
+    print(io, "   Multiplicity:        ", fmp.μ, "\n")
+    print(io, "   Inverse Laplacian:   ", fmp.Δ⁻¹, "\n")
+    print(io, "   Gradient:            ", fmp.D, "\n")
 end
 
 
@@ -64,9 +63,9 @@ function multiplicity(T, ℳ, 𝒩)
 end
 
 
-function laplacian(T, M, N, ℳ, 𝒩)
-    m = circshift(collect(-div(M-1,2):div(M,2)), -div(M-1,2))
-    n = collect(0:div(N,2))
+function inverse_laplacian(T, ℳ, 𝒩)
+    m = circshift(collect(-div(ℳ-1,2):div(ℳ,2)), -div(ℳ-1,2))
+    n = collect(1:𝒩)-1
 
     Δ⁻¹ = zeros(T, ℳ, 𝒩)
 
@@ -80,9 +79,9 @@ function laplacian(T, M, N, ℳ, 𝒩)
 end
 
 
-function gradient(T, M, N, ℳ, 𝒩)
-    m = circshift(collect(-div(M-1,2):div(M,2)), -div(M-1,2))
-    n = collect(0:div(N,2))
+function gradient(T, ℳ, 𝒩)
+    m = circshift(collect(-div(ℳ-1,2):div(ℳ,2)), -div(ℳ-1,2))
+    n = collect(1:𝒩)-1
 
     D₁ = zeros(T, ℳ, 𝒩)
     D₂ = zeros(T, ℳ, 𝒩)
@@ -95,17 +94,4 @@ function gradient(T, M, N, ℳ, 𝒩)
     end
 
     [D₁, D₂]
-end
-
-
-@generated function frequencies{M, N, T <: Integer}(r::T, s::T, grid::Grid{M,N})
-    m = circshift(collect(-div(M-1,2):div(M,2)), -div(M-1,2))
-    n = collect(0:div(N,2))
-
-    # println(m)
-    # println(n)
-
-    quote
-        return $m[r], $n[s]
-    end
 end
