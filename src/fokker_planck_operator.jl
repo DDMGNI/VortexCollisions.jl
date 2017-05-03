@@ -46,7 +46,6 @@ end
     local Dû::Vector{Matrix{CT}}
     local Dĥ::Vector{Matrix{CT}}
     local Ĵ::Vector{Matrix{CT}}
-    # local ĝ::Vector{Matrix{CT}}
     local ŵ::Matrix{Matrix{CT}}
 
     local divĴ::Matrix{CT}
@@ -87,7 +86,6 @@ end
     Dû = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
     Dĥ = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
     Ĵ  = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
-    # ĝ  = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
 
     ŵ = Array{Array{CT,2}}(2,2)
 
@@ -128,10 +126,9 @@ end
 
                 for k in 1:length($g)
                     $g[k] .= $Dh[k][i,j] .- $Dh[k]
-                    # prfft!(op.ft, $g[k], $ĝ[k])
                 end
 
-                op.wfunc($g, $w)
+                op.wfunc(op.grid, i, j, $g, $w)
 
                 for l in 1:size($w,2)
                     for k in 1:size($w,1)
@@ -146,8 +143,8 @@ end
                     end
                 end
 
-                for l in 1:size($ŵ,2)
-                    for k in 1:size($ŵ,1)
+                for l in 1:size($𝔻,2)
+                    for k in 1:size($𝔻,1)
                         $𝔻[k,l][i,j] = real(fourier_quadrature($ŵ[k,l], $m̂, op.ft.μ, op.grid))
                     end
                 end
@@ -161,12 +158,11 @@ end
         end
 
         for k in 1:length($J)
-            for j in 1:N
-                for i in 1:M
+            for j in 1:size($J[k],2)
+                for i in 1:size($J[k],1)
                     $J[k][i,j] = $𝔻[k,1][i,j] * $Du[1][i,j] + $𝔻[k,2][i,j] * $Du[2][i,j] + $𝔽[k][i,j] * $m[i,j]
                 end
             end
-            # $J[k] .= $𝔻[k,1] .* $Du[1] .+ $𝔻[k,2] .* $Du[2] .+ $𝔽[k] .* $m
             prfft!(op.ft, $J[k], $Ĵ[k])
         end
 
@@ -189,60 +185,52 @@ function hfunc_fokker_planck!(u::Matrix, ϕ::Matrix, h::Matrix)
 end
 
 
-# g_kij, with k the vector component, and ij the grid index
-# function wfunc{T}(op::FokkerPlanckOperator{T}, x::T, x_grid::Matrix{T}, g::Vector{Matrix{T}}, w::Matrix{Matrix{T}})
-function wfunc_fokker_planck!{T}(g::Vector{Matrix{T}}, w::Matrix{Matrix{T}})
-    local g¹::T
-    local g²::T
+@generated function wfunc_fokker_planck!{M,N,T}(grid::Grid2d{M,N,T}, i::Int, j::Int, g::Vector{Matrix{T}}, w::Matrix{Matrix{T}})
+    # local g¹::Matrix{T} = zeros(T,M,N)
+    local g²::Matrix{T} = zeros(T,M,N)
 
-    local t1::Matrix{T}
-    local t2::Matrix{T}
+    quote
+        @assert size(w, 1) == length(g)
+        @assert size(w, 2) == length(g)
+        @assert size(w[1,1], 1) == size(g[1],1) == M
+        @assert size(w[1,1], 2) == size(g[1],2) == N
 
-    @assert size(w, 1) == length(g)
-    @assert size(w, 2) == length(g)
-    @assert size(w[1,1], 1) == size(g[1],1)
-    @assert size(w[1,1], 2) == size(g[1],2)
-
-    M = size(g[1],1)
-    N = size(g[1],2)
-
-    for j in 1:N
-        for i in 1:M
-            g² = 0
-            for k in 1:size(g,1)
-                g² += g[k][i,j]^2
-                # w[k,k][i,j] = 1
-            end
-            # g¹ = sqrt(g²)
-            for l in 1:size(w,2)
-                for k in 1:size(w,1)
-                    w[k,l][i,j] = 0
-                end
-            end
+        for l in 1:size(w,2)
             for k in 1:size(w,1)
-                w[k,k][i,j] = g²
+                w[k,l] .= 0
             end
-            # if g¹ == 0 println("g¹ is zero for [", i, ",", j, "]") end
-            for l in 1:size(w,2)
-                for k in 1:size(w,1)
-                    w[k,l][i,j] -= g[k][i,j] * g[l][i,j]
-                    # w[l,k][i,j] -= g[l][i,j] * g[k][i,j] / g²
-                    # w[l,k][i,j] /= g¹
+        end
+
+        $g² .= 0
+
+        for k in 1:size(g,1)
+            for j in 1:size($g²,2)
+                for i in 1:size($g²,1)
+                    $g²[i,j] += g[k][i,j]^2
                 end
             end
         end
+
+        # $g¹ .= sqrt.($g²)
+
+        for k in 1:size(w,1)
+            for j in 1:size(w[k,k],2)
+                for i in 1:size(w[k,k],1)
+                    w[k,k][i,j] = $g²[i,j]
+                end
+            end
+        end
+
+        for l in 1:size(w,2)
+            for k in 1:size(w,1)
+                for j in 1:size(w[k,l],2)
+                    for i in 1:size(w[k,l],1)
+                        w[k,l][i,j] -= g[k][i,j] * g[l][i,j]
+                    end
+                end
+            end
+        end
+
+        w
     end
-
-    # t1 = zeros(T,M,N)
-    # t2 = zeros(T,M,N)
-    #
-    # for l in 1:length(g)
-    #     t1 .+= w[1,l] .* g[l]
-    #     t2 .+= w[2,l] .* g[l]
-    # end
-    #
-    # println(t1)
-    # println(t2)
-
-    w
 end

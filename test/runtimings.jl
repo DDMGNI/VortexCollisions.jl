@@ -23,8 +23,13 @@ function run_timings()
     Δ⁻¹u = zeros(u)
     divJ = zeros(u)
 
+    u₀ = zeros(u)
+    u₁ = zeros(u)
+
     evaluate_function_on_grid(grid, u_test, u)
 
+
+    u₀ .= u
 
     frfft!(ft, u, û)
     prfft!(ft, u, û)
@@ -33,6 +38,7 @@ function run_timings()
     irfft!(ft, Δ⁻¹û, Δ⁻¹u)
     fourier_quadrature(û, û, ft.μ, grid)
     collision_operator!(op, u, divJ)
+    timestep!(op, u₀, u₁, 1E-3)
 
 
     print(" frfft!:     ")
@@ -55,6 +61,9 @@ function run_timings()
 
     print(" collisions: ")
     @time collision_operator!(op, u, divJ)
+
+    print(" time step:  ")
+    @time timestep!(op, u₀, u₁, 1E-3)
 
 end
 
