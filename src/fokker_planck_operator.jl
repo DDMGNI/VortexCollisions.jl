@@ -158,7 +158,7 @@ end
         end
 
         for k in 1:length($J)
-            for j in 1:size($J[k],2)
+            @inbounds for j in 1:size($J[k],2)
                 for i in 1:size($J[k],1)
                     $J[k][i,j] = $𝔻[k,1][i,j] * $Du[1][i,j] + $𝔻[k,2][i,j] * $Du[2][i,j] + $𝔽[k][i,j] * $m[i,j]
                 end
@@ -204,7 +204,7 @@ end
         $g² .= 0
 
         for k in 1:size(g,1)
-            for j in 1:size($g²,2)
+            @inbounds for j in 1:size($g²,2)
                 for i in 1:size($g²,1)
                     $g²[i,j] += g[k][i,j]^2
                 end
@@ -214,7 +214,7 @@ end
         # $g¹ .= sqrt.($g²)
 
         for k in 1:size(w,1)
-            for j in 1:size(w[k,k],2)
+            @inbounds for j in 1:size(w[k,k],2)
                 for i in 1:size(w[k,k],1)
                     w[k,k][i,j] = $g²[i,j]
                 end
@@ -223,7 +223,7 @@ end
 
         for l in 1:size(w,2)
             for k in 1:size(w,1)
-                for j in 1:size(w[k,l],2)
+                @inbounds for j in 1:size(w[k,l],2)
                     for i in 1:size(w[k,l],1)
                         w[k,l][i,j] -= g[k][i,j] * g[l][i,j]
                     end

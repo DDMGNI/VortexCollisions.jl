@@ -5,7 +5,7 @@ function fourier_quadrature{RT,CT}(w::Matrix{CT}, v::Matrix{CT}, u::Matrix{CT}, 
 
     local result::CT = 0
 
-    for j in 1:size(u,2)
+    @inbounds for j in 1:size(u,2)
         for i in 1:size(u,1)
             result += w[i,j] * conj(v[i,j]) * u[i,j]
         end
@@ -18,9 +18,9 @@ end
 function fourier_quadrature{RT,CT}(w::Matrix{Matrix{CT}}, v::Matrix{CT}, u::Matrix{CT}, grid::Grid2d{RT})
     local result::Matrix{CT} = zeros(CT, size(w,1), size(w,2))
 
-    for j in 1:size(w,2)
-        for i in 1:size(w,1)
-            result[i,j] = fourier_quarature(w[i,j], v, u, grid)
+    for l in 1:size(w,2)
+        for k in 1:size(w,1)
+            result[k,l] = fourier_quarature(w[k,l], v, u, grid)
         end
     end
 
@@ -33,9 +33,9 @@ function fourier_quadrature{RT,CT}(w::Matrix{Matrix{CT}}, v::Vector{Matrix{CT}},
 
     local result::Vector{CT} = zeros(CT, size(w,1))
 
-    for i in 1:size(w,1)
-        for j in 1:size(w,2)
-            result[i] += fourier_quarature(w[i,j], v[j], u, grid)
+    for k in 1:size(w,1)
+        for l in 1:size(w,2)
+            result[k] += fourier_quarature(w[k,l], v[l], u, grid)
         end
     end
 
