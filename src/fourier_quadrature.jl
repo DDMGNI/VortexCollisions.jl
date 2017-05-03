@@ -1,9 +1,9 @@
 
 
-function fourier_quadrature{T}(w::Matrix{T}, v::Matrix{T}, u::Matrix{T}, grid::Grid2d)
+function fourier_quadrature{RT,CT}(w::Matrix{CT}, v::Matrix{CT}, u::Matrix{CT}, grid::Grid2d{RT})
     @assert size(u) == size(v) == size(w)
 
-    local result::T = 0
+    local result::CT = 0
 
     for j in 1:size(u,2)
         for i in 1:size(u,1)
@@ -15,8 +15,8 @@ function fourier_quadrature{T}(w::Matrix{T}, v::Matrix{T}, u::Matrix{T}, grid::G
 end
 
 
-function fourier_quadrature{T}(w::Matrix{Matrix{T}}, v::Matrix{T}, u::Matrix{T}, grid::Grid2d)
-    local result::Matrix{T} = zeros(T, size(w, 1), size(w, 2))
+function fourier_quadrature{RT,CT}(w::Matrix{Matrix{CT}}, v::Matrix{CT}, u::Matrix{CT}, grid::Grid2d{RT})
+    local result::Matrix{CT} = zeros(CT, size(w,1), size(w,2))
 
     for j in 1:size(w,2)
         for i in 1:size(w,1)
@@ -28,10 +28,10 @@ function fourier_quadrature{T}(w::Matrix{Matrix{T}}, v::Matrix{T}, u::Matrix{T},
 end
 
 
-function fourier_quadrature{T}(w::Matrix{Matrix{T}}, v::Vector{Matrix{T}}, u::Matrix{T}, grid::Grid2d)
-    @assert size(w, 2) == length(v)
+function fourier_quadrature{RT,CT}(w::Matrix{Matrix{CT}}, v::Vector{Matrix{CT}}, u::Matrix{CT}, grid::Grid2d{RT})
+    @assert size(w,2) == length(v)
 
-    local result::Vector{T} = zeros(T, size(w, 1))
+    local result::Vector{CT} = zeros(CT, size(w,1))
 
     for i in 1:size(w,1)
         for j in 1:size(w,2)

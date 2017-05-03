@@ -1,35 +1,19 @@
 
-function u_test(x, y)
-    exp(cos(x) + cos(2y))
-end
-
-function dudx_test(x,y)
-    - sin(x) * u_test(x,y)
-end
-
-function dudy_test(x,y)
-    - 2sin(2y) * u_test(x,y)
-end
-
 function testGradient()
     M = 32
     N = 64
 
     grid = Grid2d(M,N)
-    ft   = FourierTransform(Float64, grid)
+    ft   = FourierTransform(grid)
     D    = get_gradient(ft)
 
     u  = get_field(grid)
     ux = zeros(u)
     uy = zeros(u)
 
-    for i in 1:M
-        for j in 1:N
-            u[i,j]  = u_test(grid.x[i], grid.y[j])
-            ux[i,j] = dudx_test(grid.x[i], grid.y[j])
-            uy[i,j] = dudy_test(grid.x[i], grid.y[j])
-        end
-    end
+    evaluate_function_on_grid(grid, u_test, u)
+    evaluate_function_on_grid(grid, dudx_test, ux)
+    evaluate_function_on_grid(grid, dudy_test, uy)
 
     û = get_trans(ft)
     prfft!(ft, u, û)
@@ -48,27 +32,19 @@ function testGradient()
 end
 
 
-function f_test(x, y)
-    (sin(x)^2 - cos(x) + 4sin(2y)^2 - 4cos(2y)) * u_test(x,y)
-end
-
 function testInverseLaplacian()
     M = 32
     N = 64
 
     grid = Grid2d(M,N)
-    ft   = FourierTransform(Float64, grid)
+    ft   = FourierTransform(grid)
     Δ⁻¹  = get_inverse_laplacian(ft)
 
     u = get_field(grid)
     f = get_field(grid)
 
-    for i in 1:M
-        for j in 1:N
-            u[i,j]  = u_test(grid.x[i], grid.y[j])
-            f[i,j]  = f_test(grid.x[i], grid.y[j])
-        end
-    end
+    evaluate_function_on_grid(grid, u_test, u)
+    evaluate_function_on_grid(grid, f_test, f)
 
     uhat = get_trans(ft)
     fhat = get_trans(ft)

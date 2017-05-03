@@ -10,7 +10,7 @@ function testQuadrature()
     σ = 0.5
 
     grid = Grid2d(M,N)
-    ft   = FourierTransform(Float64, grid)
+    ft   = FourierTransform(grid)
     u    = get_field(grid)
     û    = get_trans(ft)
 

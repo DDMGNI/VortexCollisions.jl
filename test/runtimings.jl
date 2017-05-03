@@ -1,18 +1,16 @@
 
 using VortexCollisions
 
-
-function u_test(x, y)
-
-end
+include("test_functions.jl")
 
 
 function run_timings()
-    M = 32
+    M = 64
     N = 64
 
     grid = Grid2d(M,N)
-    ft   = FourierTransform(Float64, grid)
+    ft   = FourierTransform(grid)
+    op   = FokkerPlanckOperator(grid, ft)
     D    = get_gradient(ft)
     Δ⁻¹  = get_inverse_laplacian(ft)
 
@@ -23,12 +21,9 @@ function run_timings()
     Dû   = [zeros(û), zeros(û)]
 
     Δ⁻¹u = zeros(u)
+    divJ = zeros(u)
 
-    for i in 1:M
-        for j in 1:N
-            u[i,j]  = exp(cos(grid.x[i]) + cos(grid.y[j]))
-        end
-    end
+    evaluate_function_on_grid(grid, u_test, u)
 
 
     frfft!(ft, u, û)
@@ -37,6 +32,7 @@ function run_timings()
     apply_operator!(D, û, Dû)
     irfft!(ft, Δ⁻¹û, Δ⁻¹u)
     fourier_quadrature(û, û, ft.μ, grid)
+    collision_operator!(op, u, divJ)
 
 
     print(" frfft!:     ")
@@ -57,6 +53,8 @@ function run_timings()
     print(" quadrature: ")
     @time fourier_quadrature(û, û, ft.μ, grid)
 
+    print(" collisions: ")
+    @time collision_operator!(op, u, divJ)
 
 end
 

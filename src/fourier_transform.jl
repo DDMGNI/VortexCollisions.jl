@@ -8,7 +8,7 @@ struct FourierTransform{ℳ, 𝒩, RT <: Number, CT <: Number}
     back_plan::Base.DFT.ScaledPlan{CT,Base.DFT.FFTW.rFFTWPlan{CT,1,false,2},RT}
 end
 
-function FourierTransform{M,N}(RT, grid::Grid2d{M,N}; mcut=NaN, ncut=NaN)
+function FourierTransform{M,N,RT}(grid::Grid2d{M,N,RT}; mcut=NaN, ncut=NaN)
     ℳ = M
     𝒩 = div(N,2)+1
 
@@ -22,6 +22,9 @@ function FourierTransform{M,N}(RT, grid::Grid2d{M,N}; mcut=NaN, ncut=NaN)
 
     forw_plan = plan_rfft(zeros(RT, M, N), (2,1))
     back_plan = plan_irfft(zeros(CT, ℳ, 𝒩), N, (2,1))
+
+    # println(size(forw_plan), eltype(forw_plan), typeof(forw_plan))
+    # println(size(back_plan), eltype(back_plan), typeof(back_plan))
 
     FourierTransform{ℳ, 𝒩, RT, CT}(m, n, χ, μ, forw_plan, back_plan)
 end

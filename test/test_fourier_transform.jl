@@ -4,7 +4,7 @@ function testFourierTransform()
     N = 5
 
     grid = Grid2d(M,N)
-    ft   = FourierTransform(Float64, grid; mcut=2, ncut=2)
+    ft   = FourierTransform(grid; mcut=2, ncut=2)
 
     println(ft)
 end
@@ -17,14 +17,10 @@ function testRealFourierTransforms()
     grid = Grid2d(M,N)
     u    = get_field(grid)
     ufft = get_field(grid)
-    ft   = FourierTransform(eltype(u), grid; mcut=4, ncut=4)
+    ft   = FourierTransform(grid; mcut=4, ncut=4)
     û    = get_trans(ft)
 
-    for j in 1:N
-        for i in 1:M
-            u[i,j]  = cos(grid.x[i]) * sin(grid.y[j])
-        end
-    end
+    evaluate_function_on_grid(grid, cos_test, u)
 
 
     prfft!(ft, u, û)

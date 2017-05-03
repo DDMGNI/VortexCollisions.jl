@@ -2,6 +2,9 @@
 using VortexCollisions
 using Base.Test
 
+
+include("test_functions.jl")
+
 include("test_grid.jl")
 include("test_fourier_transform.jl")
 include("test_fourier_operators.jl")
