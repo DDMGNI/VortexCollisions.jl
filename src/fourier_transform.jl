@@ -2,9 +2,10 @@
 struct FourierTransform{ℳ, 𝒩, RT <: Number, CT <: Number}
     m::Vector{RT}
     n::Vector{RT}
-
     χ::Matrix{RT}
     μ::Matrix{CT}
+    forw_plan::Base.DFT.FFTW.rFFTWPlan{RT,-1,false,2}
+    back_plan::Base.DFT.ScaledPlan{CT,Base.DFT.FFTW.rFFTWPlan{CT,1,false,2},RT}
 end
 
 function FourierTransform{M,N}(RT, grid::Grid2d{M,N}; mcut=NaN, ncut=NaN)
@@ -19,7 +20,10 @@ function FourierTransform{M,N}(RT, grid::Grid2d{M,N}; mcut=NaN, ncut=NaN)
     χ   = cutoff_frequencies(RT, ℳ, 𝒩, mcut, ncut)
     μ   = multiplicity(CT, ℳ, 𝒩)
 
-    FourierTransform{ℳ, 𝒩, RT, CT}(m, n, χ, μ)
+    forw_plan = plan_rfft(zeros(RT, M, N), (2,1))
+    back_plan = plan_irfft(zeros(CT, ℳ, 𝒩), N, (2,1))
+
+    FourierTransform{ℳ, 𝒩, RT, CT}(m, n, χ, μ, forw_plan, back_plan)
 end
 
 function Base.show{ℳ,𝒩,RT,CT}(io::IO, ft::FourierTransform{ℳ,𝒩,RT,CT})
@@ -38,7 +42,7 @@ end
 Plain (real) FFT.
 """
 function prfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Matrix{RT}, û::Matrix{CT})
-    û .= rfft(u, (2,1))
+    A_mul_B!(û, ft.forw_plan, u)
 end
 
 
@@ -46,14 +50,15 @@ end
 Filtered (real) FFT.
 """
 function frfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Matrix{RT}, û::Matrix{CT})
-    û .= ft.χ .* rfft(u, (2,1))
+    A_mul_B!(û, ft.forw_plan, u)
+    û .*= ft.χ
 end
 
 """
 Inverse (real) FFT.
 """
 function irfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, û::Matrix{CT}, u::Matrix{RT})
-    u .= irfft(û, size(u,2), (2,1))
+    A_mul_B!(u, ft.back_plan, û)
 end
 
 
