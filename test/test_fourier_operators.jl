@@ -26,8 +26,8 @@ function testGradient()
     irfft!(ft, Dû[1], uxfft)
     irfft!(ft, Dû[2], uyfft)
 
-    @test maximum(ux - uxfft) ≈ zero(eltype(u)) atol=1E-12
-    @test maximum(uy - uyfft) ≈ zero(eltype(u)) atol=1E-12
+    @test maximum(abs.(ux - uxfft)) ≈ zero(eltype(u)) atol=1E-12
+    @test maximum(abs.(uy - uyfft)) ≈ zero(eltype(u)) atol=1E-12
 
 end
 
@@ -67,7 +67,7 @@ function testInverseLaplacian()
 
     Δ⁻¹f_ana = u .- u₀fft
 
-    @test maximum(Δ⁻¹f_ana - Δ⁻¹f_fft) ≈ zero(eltype(f)) atol=1E-14
+    @test maximum(abs.(Δ⁻¹f_ana - Δ⁻¹f_fft)) ≈ zero(eltype(f)) atol=1E-14
 
 end
 

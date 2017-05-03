@@ -7,7 +7,7 @@ function fourier_quadrature{RT,CT}(w::Matrix{CT}, v::Matrix{CT}, u::Matrix{CT}, 
 
     for j in 1:size(u,2)
         for i in 1:size(u,1)
-            result += w[i,j] * v[i,j] * u[i,j]
+            result += w[i,j] * conj(v[i,j]) * u[i,j]
         end
     end
 

@@ -21,7 +21,7 @@ module VortexCollisions
 
     include("collision_operator.jl")
 
-    export FokkerPlanckOperator, collision_operator!, hfunc, mfunc, wfunc
+    export FokkerPlanckOperator, collision_operator!
 
     include("fokker_planck_operator.jl")
 

@@ -21,6 +21,7 @@ end
 Apply fourier operator v ← sum_i op[i] * u[i]
 """
 function apply_operator!{CT}(op::Vector{Matrix{CT}}, u::Vector{Matrix{CT}}, v::Matrix{CT})
+    @assert length(op) == length(u)
     fill!(v, 0)
     for k in 1:length(op)
         v .+= op[k] .* u[k]

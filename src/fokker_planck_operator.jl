@@ -1,18 +1,26 @@
 
-struct FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩} <: CollisionOperator{RT,CT,M,N,ℳ,𝒩}
+struct FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩,HT,MT,WT} <: CollisionOperator{RT,CT,M,N,ℳ,𝒩}
     grid::Grid2d{M,N,RT}
     ft::FourierTransform{ℳ,𝒩,RT,CT}
     D::Vector{Matrix{CT}}
     Δ⁻¹::Matrix{CT}
 
-    function FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransform{ℳ,𝒩,RT,CT}) where {RT,CT,M,N,ℳ,𝒩}
+    hfunc::HT
+    mfunc::MT
+    wfunc::WT
+
+    function FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩,HT,MT,WT}(grid::Grid2d{M,N,RT}, ft::FourierTransform{ℳ,𝒩,RT,CT},
+                                                           hfunc::HT, mfunc::MT, wfunc::WT) where {RT,CT,M,N,ℳ,𝒩,HT,MT,WT}
         D   = get_gradient(ft)
         Δ⁻¹ = get_inverse_laplacian(ft, sign=-1)
-        new(grid, ft, D, Δ⁻¹)
+        new(grid, ft, D, Δ⁻¹, hfunc, mfunc, wfunc)
     end
 end
 
-FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransform{ℳ,𝒩,RT,CT}) = FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid, ft)
+function FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransform{ℳ,𝒩,RT,CT};
+                                              hfunc=hfunc_fokker_planck!, mfunc=mfunc_fokker_planck!, wfunc=wfunc_fokker_planck!)
+    FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩, typeof(hfunc), typeof(mfunc), typeof(wfunc)}(grid, ft, hfunc, mfunc, wfunc)
+end
 
 
 @generated function collision_operator!{RT,CT,M,N,ℳ,𝒩}(op::FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}, u::Matrix{RT}, divJ::Matrix{RT})
@@ -38,6 +46,7 @@ FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransf
     local Dû::Vector{Matrix{CT}}
     local Dĥ::Vector{Matrix{CT}}
     local Ĵ::Vector{Matrix{CT}}
+    # local ĝ::Vector{Matrix{CT}}
     local ŵ::Matrix{Matrix{CT}}
 
     local divĴ::Matrix{CT}
@@ -78,6 +87,7 @@ FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransf
     Dû = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
     Dĥ = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
     Ĵ  = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
+    # ĝ  = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
 
     ŵ = Array{Array{CT,2}}(2,2)
 
@@ -99,8 +109,8 @@ FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransf
 
         irfft!(op.ft, $ϕ̂, $ϕ)
 
-        mfunc(op, u, $m)
-        hfunc(op, u, $ϕ, $h)
+        op.mfunc(u, $m)
+        op.hfunc(u, $ϕ, $h)
 
         frfft!(op.ft, $m, $m̂)
         frfft!(op.ft, $h, $ĥ)
@@ -118,9 +128,10 @@ FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransf
 
                 for k in 1:length($g)
                     $g[k] .= $Dh[k][i,j] .- $Dh[k]
+                    # prfft!(op.ft, $g[k], $ĝ[k])
                 end
 
-                wfunc(op, $g, $w)
+                op.wfunc($g, $w)
 
                 for l in 1:size($w,2)
                     for k in 1:size($w,1)
@@ -128,15 +139,15 @@ FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransf
                     end
                 end
 
-                for k in 1:size($𝔽,1)
+                for k in 1:size($ŵ,1)
                     $𝔽[k][i,j] = 0
-                    for l in 1:size($𝔽,2)
+                    for l in 1:size($ŵ,2)
                         $𝔽[k][i,j] -= real(fourier_quadrature($ŵ[k,l], $Dû[l], op.ft.μ, op.grid))
                     end
                 end
 
-                for k in 1:size($𝔻,1)
-                    for l in 1:size($𝔻,2)
+                for l in 1:size($ŵ,2)
+                    for k in 1:size($ŵ,1)
                         $𝔻[k,l][i,j] = real(fourier_quadrature($ŵ[k,l], $m̂, op.ft.μ, op.grid))
                     end
                 end
@@ -168,48 +179,70 @@ FokkerPlanckOperator{RT,CT,M,N,ℳ,𝒩}(grid::Grid2d{M,N,RT}, ft::FourierTransf
 end
 
 
-function mfunc(op::FokkerPlanckOperator, u::Matrix, m::Matrix)
-    m .= u
+function mfunc_fokker_planck!(u::Matrix, m::Matrix)
+    m .= 1
 end
 
 
-function hfunc(op::FokkerPlanckOperator, u::Matrix, ϕ::Matrix, h::Matrix)
+function hfunc_fokker_planck!(u::Matrix, ϕ::Matrix, h::Matrix)
     h .= ϕ
 end
 
 
 # g_kij, with k the vector component, and ij the grid index
 # function wfunc{T}(op::FokkerPlanckOperator{T}, x::T, x_grid::Matrix{T}, g::Vector{Matrix{T}}, w::Matrix{Matrix{T}})
-function wfunc{T}(op::FokkerPlanckOperator{T}, g::Vector{Matrix{T}}, w::Matrix{Matrix{T}})
+function wfunc_fokker_planck!{T}(g::Vector{Matrix{T}}, w::Matrix{Matrix{T}})
     local g¹::T
     local g²::T
 
-    @assert size(w, 1) == size(g,1)
-    @assert size(w, 2) == size(g,1)
-    @assert size(w, 3) == size(g,2)
-    @assert size(w, 4) == size(g,3)
+    local t1::Matrix{T}
+    local t2::Matrix{T}
 
-    for j in 1:size(g,3)
-        for i in 1:size(g,2)
+    @assert size(w, 1) == length(g)
+    @assert size(w, 2) == length(g)
+    @assert size(w[1,1], 1) == size(g[1],1)
+    @assert size(w[1,1], 2) == size(g[1],2)
+
+    M = size(g[1],1)
+    N = size(g[1],2)
+
+    for j in 1:N
+        for i in 1:M
             g² = 0
             for k in 1:size(g,1)
                 g² += g[k][i,j]^2
                 # w[k,k][i,j] = 1
             end
             # g¹ = sqrt(g²)
-            for k in 1:size(g,1)
+            for l in 1:size(w,2)
+                for k in 1:size(w,1)
+                    w[k,l][i,j] = 0
+                end
+            end
+            for k in 1:size(w,1)
                 w[k,k][i,j] = g²
             end
             # if g¹ == 0 println("g¹ is zero for [", i, ",", j, "]") end
-            for k in 1:size(w,1)
-                for l in 1:size(w,2)
-                    w[l,k][i,j] += g[l][i,j] * g[k][i,j]
-                    # w[l,k][i,j] += g[l][i,j] * g[k][i,j] / g²
+            for l in 1:size(w,2)
+                for k in 1:size(w,1)
+                    w[k,l][i,j] -= g[k][i,j] * g[l][i,j]
+                    # w[l,k][i,j] -= g[l][i,j] * g[k][i,j] / g²
                     # w[l,k][i,j] /= g¹
                 end
             end
         end
     end
+
+    # t1 = zeros(T,M,N)
+    # t2 = zeros(T,M,N)
+    #
+    # for l in 1:length(g)
+    #     t1 .+= w[1,l] .* g[l]
+    #     t2 .+= w[2,l] .* g[l]
+    # end
+    #
+    # println(t1)
+    # println(t2)
 
     w
 end
