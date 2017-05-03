@@ -1,13 +1,4 @@
 
-function testFourierMultipliers()
-    grid = Grid2d(7,6)
-    frequencies(1, 1, grid)
-    frequencies(2, 3, grid)
-    fmp = FourierMultipliers(Float64, grid, mcut=2, ncut=2)
-    println(fmp)
-end
-
-
 function u_test(x, y)
     exp(cos(x) + cos(2y))
 end
@@ -25,11 +16,12 @@ function testGradient()
     N = 64
 
     grid = Grid2d(M,N)
-    fmp = FourierMultipliers(Float64, grid)
+    ft   = FourierTransform(Float64, grid)
+    D    = get_gradient(ft)
 
-    u  = zeros(M,N)
-    ux = zeros(M,N)
-    uy = zeros(M,N)
+    u  = get_field(grid)
+    ux = zeros(u)
+    uy = zeros(u)
 
     for i in 1:M
         for j in 1:N
@@ -39,12 +31,16 @@ function testGradient()
         end
     end
 
-    uhat  = rfft(u, (2,1))
-    uxhat = fmp.D[1] .* uhat
-    uyhat = fmp.D[2] .* uhat
+    û = get_trans(ft)
+    prfft!(ft, u, û)
+    Dû = [zeros(û), zeros(û)]
+    apply_operator!(D, û, Dû)
 
-    uxfft = irfft(uxhat, N, (2,1))
-    uyfft = irfft(uyhat, N, (2,1))
+    uxfft = zeros(ux)
+    uyfft = zeros(uy)
+
+    irfft!(ft, Dû[1], uxfft)
+    irfft!(ft, Dû[2], uyfft)
 
     @test maximum(ux - uxfft) ≈ zero(eltype(u)) atol=1E-12
     @test maximum(uy - uyfft) ≈ zero(eltype(u)) atol=1E-12
@@ -61,10 +57,11 @@ function testInverseLaplacian()
     N = 64
 
     grid = Grid2d(M,N)
-    fmp = FourierMultipliers(Float64, grid)
+    ft   = FourierTransform(Float64, grid)
+    Δ⁻¹  = get_inverse_laplacian(ft)
 
-    u  = zeros(M,N)
-    f  = zeros(M,N)
+    u = get_field(grid)
+    f = get_field(grid)
 
     for i in 1:M
         for j in 1:N
@@ -73,22 +70,31 @@ function testInverseLaplacian()
         end
     end
 
-    uhat  = rfft(u, (2,1))
-    fhat  = rfft(f, (2,1))
+    uhat = get_trans(ft)
+    fhat = get_trans(ft)
 
-    Δ⁻¹fhat = fmp.Δ⁻¹ .* fhat
+    prfft!(ft, u, uhat)
+    prfft!(ft, f, fhat)
+
+    Δ⁻¹fhat = zeros(fhat)
+
+    apply_operator!(Δ⁻¹, fhat, Δ⁻¹fhat)
 
     u₀hat = zeros(uhat)
     u₀hat[1,1] = uhat[1,1]
 
-    Δ⁻¹f_fft = irfft(Δ⁻¹fhat, N, (2,1))
-    Δ⁻¹f_ana = u .- irfft(u₀hat, N, (2,1))
+    Δ⁻¹f_fft = zeros(u)
+    u₀fft    = zeros(u)
+
+    irfft!(ft, Δ⁻¹fhat, Δ⁻¹f_fft)
+    irfft!(ft, u₀hat, u₀fft)
+
+    Δ⁻¹f_ana = u .- u₀fft
 
     @test maximum(Δ⁻¹f_ana - Δ⁻¹f_fft) ≈ zero(eltype(f)) atol=1E-14
 
 end
 
 
-testFourierMultipliers()
 testGradient()
 testInverseLaplacian()

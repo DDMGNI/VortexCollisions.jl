@@ -10,7 +10,7 @@ function testQuadrature()
     σ = 0.5
 
     grid = Grid2d(M,N)
-    fmp = FourierMultipliers(Float64, grid)
+    ft   = FourierTransform(Float64, grid)
 
     u = zeros(M,N)
 
@@ -21,7 +21,7 @@ function testQuadrature()
     end
 
     û    = rfft(u, (2,1))
-    ûint = fourier_quadrature(û, û, fmp.μ, grid.normalisation)
+    ûint = fourier_quadrature(û, û, ft.μ, grid)
 
     @test real(ûint) - π*σ^2 ≈ zero(eltype(u)) atol=1E-15
     @test imag(ûint) ≈ zero(eltype(u)) atol=eps()
