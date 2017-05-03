@@ -11,8 +11,8 @@ function testQuadrature()
 
     grid = Grid2d(M,N)
     ft   = FourierTransform(Float64, grid)
-
-    u = zeros(M,N)
+    u    = get_field(grid)
+    û    = get_trans(ft)
 
     for i in 1:M
         for j in 1:N
@@ -20,7 +20,7 @@ function testQuadrature()
         end
     end
 
-    û    = rfft(u, (2,1))
+    prfft!(ft, u, û)
     ûint = fourier_quadrature(û, û, ft.μ, grid)
 
     @test real(ûint) - π*σ^2 ≈ zero(eltype(u)) atol=1E-15
