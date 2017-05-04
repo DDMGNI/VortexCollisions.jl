@@ -190,10 +190,9 @@ end
     local g²::Matrix{T} = zeros(T,M,N)
 
     quote
-        @assert size(w, 1) == length(g)
-        @assert size(w, 2) == length(g)
-        @assert size(w[1,1], 1) == size(g[1],1) == M
-        @assert size(w[1,1], 2) == size(g[1],2) == N
+        @assert size(w,1) == size(w,2) == length(g)
+        @assert size(w[1,1],1) == size(g[1],1) == M
+        @assert size(w[1,1],2) == size(g[1],2) == N
 
         for l in 1:size(w,2)
             for k in 1:size(w,1)

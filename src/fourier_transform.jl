@@ -8,7 +8,7 @@ struct FourierTransform{ℳ, 𝒩, RT <: Number, CT <: Number}
     back_plan::Base.DFT.ScaledPlan{CT,Base.DFT.FFTW.rFFTWPlan{CT,1,false,2},RT}
 end
 
-function FourierTransform{M,N,RT}(grid::Grid2d{M,N,RT}; mcut=NaN, ncut=NaN)
+function FourierTransform{M,N,RT}(grid::Grid2d{M,N,RT}; ℳcut=NaN, 𝒩cut=NaN)
     ℳ = M
     𝒩 = div(N,2)+1
 
@@ -17,7 +17,7 @@ function FourierTransform{M,N,RT}(grid::Grid2d{M,N,RT}; mcut=NaN, ncut=NaN)
     m = circshift(collect(-div(ℳ-1,2):div(ℳ,2)), -div(ℳ-1,2))
     n = collect(1:𝒩)-1
 
-    χ   = cutoff_frequencies(RT, ℳ, 𝒩, mcut, ncut)
+    χ   = cutoff_frequencies(RT, ℳ, 𝒩, ℳcut, 𝒩cut)
     μ   = multiplicity(CT, ℳ, 𝒩)
 
     forw_plan = plan_rfft(zeros(RT, M, N), (2,1))
