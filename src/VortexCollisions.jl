@@ -27,6 +27,6 @@ module VortexCollisions
 
     export timestep!
 
-    include("time_advance.jl")
+    include("time_integration.jl")
 
 end

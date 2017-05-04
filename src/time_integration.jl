@@ -1,13 +1,15 @@
 
-# Three-stage method of Zhao and Wei with parameter C=4
-# [Math. Meth. Appl. Sci. 2014, 37 1042–1071, figure 1b]
+"""
+Three-stage Runge-Kutta method of Zhao and Wei with parameter C=4
+[Math. Meth. Appl. Sci. 2014, 37 1042–1071, figure 1b]
+"""
 @generated function timestep!{RT,CT,M,N,ℳ,𝒩}(op::CollisionOperator{RT,CT,M,N,ℳ,𝒩}, u₀::Matrix{RT}, u₁::Matrix{RT}, Δt::RT)
     local u::Vector{Matrix{RT}} = [zeros(RT,M,N), zeros(RT,M,N), zeros(RT,M,N)]
     local f::Vector{Matrix{RT}} = [zeros(RT,M,N), zeros(RT,M,N), zeros(RT,M,N)]
 
-    local a::Vector{RT} = [0.0, 0.5, 1.0]
-    local b::Vector{RT} = [1/6, 2/3, 1/6]
-    local c::Vector{RT} = [0.0, 0.5, 1.0]
+    const a::Vector{RT} = [0.0, 0.5, 1.0]
+    const b::Vector{RT} = [1/6, 2/3, 1/6]
+    const c::Vector{RT} = [0.0, 0.5, 1.0]
 
     quote
         @assert size(u₀) == size(u₁) == (M,N)
@@ -30,7 +32,7 @@
 end
 
 
-function update_field!{T}(f::Matrix{T}, u₀::Matrix{T}, u₁::Matrix{T}, fac::T)
+function update_field!{RT}(f::Matrix{RT}, u₀::Matrix{RT}, u₁::Matrix{RT}, fac::RT)
     @assert size(f) == size(u₀) == size(u₁)
     @inbounds for j in 1:size(u₁,2)
         for i in 1:size(u₁,1)
