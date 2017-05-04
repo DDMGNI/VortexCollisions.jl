@@ -29,4 +29,8 @@ module VortexCollisions
 
     include("time_integration.jl")
 
+    export run_simulation
+
+    include("simulation.jl")
+
 end
