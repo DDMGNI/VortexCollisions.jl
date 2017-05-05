@@ -4,14 +4,14 @@
 """
 Apply fourier operator v ← op * u
 """
-function apply_operator!{CT}(op::Matrix{CT}, u::Matrix{CT}, v::Matrix{CT})
+function apply_operator!{CT}(op::Matrix{CT}, u::Union{Matrix{CT},SharedArray{CT,2}}, v::Union{Matrix{CT},SharedArray{CT,2}})
     v .= op .* u
 end
 
 """
 Apply fourier operator v[i] ← op[i] * u for i in 1:length(op)
 """
-function apply_operator!{CT}(op::Vector{Matrix{CT}}, u::Matrix{CT}, v::Vector{Matrix{CT}})
+function apply_operator!{CT}(op::Vector{Matrix{CT}}, u::Union{Matrix{CT},SharedArray{CT,2}}, v::Union{Vector{Matrix{CT}},Vector{SharedArray{CT,2}}})
     for k in 1:length(op)
         v[k] .= op[k] .* u
     end
@@ -20,7 +20,7 @@ end
 """
 Apply fourier operator v ← sum_i op[i] * u[i]
 """
-function apply_operator!{CT}(op::Vector{Matrix{CT}}, u::Vector{Matrix{CT}}, v::Matrix{CT})
+function apply_operator!{CT}(op::Vector{Matrix{CT}}, u::Union{Vector{Matrix{CT}},Vector{SharedArray{CT,2}}}, v::Union{Matrix{CT},SharedArray{CT,2}})
     @assert length(op) == length(u)
     fill!(v, 0)
     for k in 1:length(op)

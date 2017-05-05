@@ -3,7 +3,7 @@
 Three-stage Runge-Kutta method of Zhao and Wei with parameter C=4
 [Math. Meth. Appl. Sci. 2014, 37 1042–1071, figure 1b]
 """
-@generated function timestep!{RT,CT,M,N,ℳ,𝒩}(op::CollisionOperator{RT,CT,M,N,ℳ,𝒩}, u₀::Matrix{RT}, u₁::Matrix{RT}, Δt::RT)
+@generated function timestep!{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, u₀::Matrix{RT}, u₁::Matrix{RT}, Δt::RT)
     local u::Vector{Matrix{RT}} = [zeros(RT,M,N), zeros(RT,M,N), zeros(RT,M,N)]
     local f::Vector{Matrix{RT}} = [zeros(RT,M,N), zeros(RT,M,N), zeros(RT,M,N)]
 

@@ -1,4 +1,10 @@
 
+if haskey(ENV, "JULIA_NUM_THREADS")
+    nw = parse(Int, ENV["JULIA_NUM_THREADS"])
+    addprocs(nw)
+end
+
+
 using VortexCollisions
 
 include("test_functions.jl")
@@ -8,8 +14,11 @@ function run_timings()
     M = 64
     N = 64
 
+    ℳcut = M
+    𝒩cut = N
+
     grid = Grid2d(M,N)
-    ft   = FourierTransform(grid)
+    ft   = FourierTransform(grid; ℳcut=ℳcut, 𝒩cut=𝒩cut)
     op   = FokkerPlanckOperator(grid, ft)
     D    = get_gradient(ft)
     Δ⁻¹  = get_inverse_laplacian(ft)
@@ -40,7 +49,6 @@ function run_timings()
     collision_operator!(op, u, divJ)
     timestep!(op, u₀, u₁, 1E-3)
 
-
     print(" frfft!:     ")
     @time frfft!(ft, u, û)
 
@@ -64,6 +72,12 @@ function run_timings()
 
     print(" time step:  ")
     @time timestep!(op, u₀, u₁, 1E-3)
+
+    print(" 3 steps:    ")
+    @time for i in 1:3 timestep!(op, u₀, u₁, 1E-3) end
+
+    Profile.clear_malloc_data()
+    collision_operator!(op, u, divJ)
 
 end
 

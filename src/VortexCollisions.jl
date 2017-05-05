@@ -1,3 +1,4 @@
+__precompile__()
 
 module VortexCollisions
 
@@ -17,6 +18,10 @@ module VortexCollisions
 
     include("fourier_quadrature.jl")
 
+    export trapezoidal_quadrature
+
+    include("trapezoidal_quadrature.jl")
+
     export CollisionOperator
 
     include("collision_operator.jl")
@@ -29,7 +34,7 @@ module VortexCollisions
 
     include("time_integration.jl")
 
-    export run_simulation
+    export initialize_workers, run_simulation
 
     include("simulation.jl")
 

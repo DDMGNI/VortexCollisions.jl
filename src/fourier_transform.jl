@@ -1,5 +1,7 @@
 
 struct FourierTransform{ℳ, 𝒩, RT <: Number, CT <: Number}
+    ℳcut::Int
+    𝒩cut::Int
     m::Vector{RT}
     n::Vector{RT}
     χ::Matrix{RT}
@@ -8,7 +10,7 @@ struct FourierTransform{ℳ, 𝒩, RT <: Number, CT <: Number}
     back_plan::Base.DFT.ScaledPlan{CT,Base.DFT.FFTW.rFFTWPlan{CT,1,false,2},RT}
 end
 
-function FourierTransform{M,N,RT}(grid::Grid2d{M,N,RT}; ℳcut=NaN, 𝒩cut=NaN)
+function FourierTransform{M,N,RT}(grid::Grid2d{M,N,RT}; ℳcut::Int=0, 𝒩cut::Int=0)
     ℳ = M
     𝒩 = div(N,2)+1
 
@@ -26,7 +28,7 @@ function FourierTransform{M,N,RT}(grid::Grid2d{M,N,RT}; ℳcut=NaN, 𝒩cut=NaN)
     # println(size(forw_plan), eltype(forw_plan), typeof(forw_plan))
     # println(size(back_plan), eltype(back_plan), typeof(back_plan))
 
-    FourierTransform{ℳ, 𝒩, RT, CT}(m, n, χ, μ, forw_plan, back_plan)
+    FourierTransform{ℳ, 𝒩, RT, CT}(ℳcut, 𝒩cut, m, n, χ, μ, forw_plan, back_plan)
 end
 
 function Base.show{ℳ,𝒩,RT,CT}(io::IO, ft::FourierTransform{ℳ,𝒩,RT,CT})
@@ -44,7 +46,7 @@ end
 """
 Plain (real) FFT.
 """
-function prfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Matrix{RT}, û::Matrix{CT})
+function prfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Union{Matrix{RT},SharedArray{RT,2}}, û::Union{Matrix{CT},SharedArray{CT,2}})
     A_mul_B!(û, ft.forw_plan, u)
 end
 
@@ -52,7 +54,7 @@ end
 """
 Filtered (real) FFT.
 """
-function frfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Matrix{RT}, û::Matrix{CT})
+function frfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Union{Matrix{RT},SharedArray{RT,2}}, û::Union{Matrix{CT},SharedArray{CT,2}})
     A_mul_B!(û, ft.forw_plan, u)
     û .*= ft.χ
 end
@@ -60,27 +62,27 @@ end
 """
 Inverse (real) FFT.
 """
-function irfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, û::Matrix{CT}, u::Matrix{RT})
+function irfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, û::Union{Matrix{CT},SharedArray{CT,2}}, u::Union{Matrix{RT},SharedArray{RT,2}})
     A_mul_B!(u, ft.back_plan, û)
 end
 
 
-function cutoff_frequencies(T, ℳ, 𝒩, mcut, ncut)
+function cutoff_frequencies(T, ℳ, 𝒩, ℳcut, 𝒩cut)
     χ = ones(T, ℳ, 𝒩)
 
-    if !isnan(mcut)
+    if ℳcut > 0
         for n in 1:𝒩
-            for m in mcut+1:div(ℳ+1,2)
+            for m in ℳcut+1:div(ℳ+1,2)
                 χ[m, n] = 0
             end
-            for m in mcut-1:div(ℳ,2)
+            for m in ℳcut-1:div(ℳ,2)
                 χ[end-m, n] = 0
             end
         end
     end
 
-    if !isnan(ncut)
-        for n in ncut+1:𝒩
+    if 𝒩cut > 0
+        for n in 𝒩cut+1:𝒩
             for m in 1:ℳ
                 χ[m,n] = 0
             end
