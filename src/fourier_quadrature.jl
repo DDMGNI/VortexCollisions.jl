@@ -1,6 +1,6 @@
 
 
-function fourier_quadrature{RT,CT}(w::Matrix{CT}, v::Union{Array{CT,2},SharedArray{CT,2}}, u::Union{Array{CT,2},SharedArray{CT,2}}, grid::Grid2d{RT})
+function fourier_quadrature{M,N,RT,CT}(w::Matrix{CT}, v::Union{Array{CT,2},SharedArray{CT,2}}, u::Union{Array{CT,2},SharedArray{CT,2}}, grid::Grid2d{M,N,RT})
     @assert size(u) == size(v) == size(w)
 
     local result::CT = 0
@@ -15,7 +15,7 @@ function fourier_quadrature{RT,CT}(w::Matrix{CT}, v::Union{Array{CT,2},SharedArr
 end
 
 
-function fourier_quadrature{RT,CT}(w::Matrix{Matrix{CT}}, v::Union{Array{CT,2},SharedArray{CT,2}}, u::Union{Array{CT,2},SharedArray{CT,2}}, grid::Grid2d{RT})
+function fourier_quadrature{M,N,RT,CT}(w::Matrix{Matrix{CT}}, v::Union{Array{CT,2},SharedArray{CT,2}}, u::Union{Array{CT,2},SharedArray{CT,2}}, grid::Grid2d{M,N,RT})
     local result::Matrix{CT} = zeros(CT, size(w,1), size(w,2))
 
     for l in 1:size(w,2)
@@ -28,7 +28,7 @@ function fourier_quadrature{RT,CT}(w::Matrix{Matrix{CT}}, v::Union{Array{CT,2},S
 end
 
 
-function fourier_quadrature{RT,CT}(w::Matrix{Matrix{CT}}, v::Union{Vector{Array{CT,2}},Vector{SharedArray{CT,2}}}, u::Union{Array{CT,2},SharedArray{CT,2}}, grid::Grid2d{RT})
+function fourier_quadrature{M,N,RT,CT}(w::Matrix{Matrix{CT}}, v::Union{Vector{Array{CT,2}},Vector{SharedArray{CT,2}}}, u::Union{Array{CT,2},SharedArray{CT,2}}, grid::Grid2d{M,N,RT})
     @assert size(w,2) == length(v)
 
     local result::Vector{CT} = zeros(CT, size(w,1))

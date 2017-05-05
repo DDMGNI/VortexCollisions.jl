@@ -169,11 +169,11 @@ end
         apply_operator!(op.D, $û, op.Dû)
         apply_operator!(op.D, $ĥ, op.Dĥ)
 
-        for k in 1:length(op.Dû)
+        for k in 1:length(op.Du)
             irfft!(op.ft, op.Dû[k], op.Du[k])
         end
 
-        for k in 1:length(op.Dĥ)
+        for k in 1:length(op.Dh)
             irfft!(op.ft, op.Dĥ[k], op.Dh[k])
         end
 
@@ -210,13 +210,13 @@ function compute_convolution!{M,N,ℳ,𝒩,RT,CT}(op::FokkerPlanckOperator{M,N,�
     if nworkers() > 1
         @sync for w in workers()
             @spawnat w begin
-                convolution_kernel_fourier!(gr, ft, j1, j2, wfunc, Dh, Dû, m̂, 𝔽, 𝔻)
-                # convolution_kernel_trapezoidal!(gr, j1, j2, wfunc, Dh, Du, m, 𝔽, 𝔻)
+                # convolution_kernel_fourier!(gr, ft, j1, j2, wfunc, Dh, Dû, m̂, 𝔽, 𝔻)
+                convolution_kernel_trapezoidal!(gr, j1, j2, wfunc, Dh, Du, m, 𝔽, 𝔻)
             end
         end
     else
-        convolution_kernel_fourier!(op.grid, op.ft, 1, N, op.wfunc, op.Dh, op.Dû, op.m̂, op.𝔽, op.𝔻)
-        # convolution_kernel_trapezoidal!(gr, 1, N, op.wfunc, op.Dh, op.Du, op.m, op.𝔽, op.𝔻)
+        # convolution_kernel_fourier!(op.grid, op.ft, 1, N, op.wfunc, op.Dh, op.Dû, op.m̂, op.𝔽, op.𝔻)
+        convolution_kernel_trapezoidal!(op.grid, 1, N, op.wfunc, op.Dh, op.Du, op.m, op.𝔽, op.𝔻)
     end
 end
 
@@ -244,6 +244,8 @@ end
 
     quote
         @assert 1 ≤ j1 ≤ j2 ≤ N
+        @assert length($g) == length(Dh) == length(Dû)
+        @assert length($g) == length(𝔽) == size(𝔻,1) == size(𝔻,2)
 
         for j in j1:j2
             for i in 1:M
@@ -295,6 +297,8 @@ end
 
     quote
         @assert 1 ≤ j1 ≤ j2 ≤ N
+        @assert length($g) == length(Dh) == length(Du)
+        @assert length($g) == length(𝔽) == size(𝔻,1) == size(𝔻,2)
 
         for j in j1:j2
             for i in 1:M
@@ -307,7 +311,7 @@ end
 
                 for k in 1:length(𝔽)
                     𝔽[k][i,j] = 0
-                    for l in 1:size($ŵ,2)
+                    for l in 1:length(𝔽)
                         𝔽[k][i,j] -= trapezoidal_quadrature($w[k,l], Du[l], gr)
                     end
                 end

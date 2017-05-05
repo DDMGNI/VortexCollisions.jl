@@ -51,7 +51,8 @@ function testNullspace(utest, mfunc, hfunc)
 
     collision_operator!(op, u, divJ)
 
-    println(maximum(abs.(divJ)))
+    # println(maximum(abs.(divJ)))
+    @test maximum(abs.(divJ)) ≈ zero(eltype(divJ)) atol=1E-9
     # @test maximum(abs.(divJ)) ≈ zero(eltype(divJ)) atol=1E-10
 
 end
