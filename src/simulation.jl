@@ -37,7 +37,7 @@ end
 """
 Run simulation for nt time steps Δt starting from u₀ and write output to HDF5 file <output>.
 """
-function run_simulation{RT,CT,M,N}(op::CollisionOperator{RT,CT,M,N}, nt::Int, Δt::RT, u₀::Matrix{RT}, output::String)
+function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, nt::Int, Δt::RT, u₀::Matrix{RT}, output::String)
 
     # create HDF5 output file
     h5 = h5open(output, "w")
@@ -66,7 +66,7 @@ function run_simulation{RT,CT,M,N}(op::CollisionOperator{RT,CT,M,N}, nt::Int, Δ
 end
 
 
-@generated function write_solution_to_hdf5{RT,CT,M,N,ℳ,𝒩}(op::CollisionOperator{RT,CT,M,N,ℳ,𝒩}, u::Matrix{RT}, n::Int, h5ϕ::HDF5Dataset, h5ω::HDF5Dataset)
+@generated function write_solution_to_hdf5{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, u::Matrix{RT}, n::Int, h5ϕ::HDF5Dataset, h5ω::HDF5Dataset)
     local û::Matrix{CT} = zeros(CT,ℳ,𝒩)
     local ϕ̂::Matrix{CT} = zeros(CT,ℳ,𝒩)
     local ϕ::Matrix{RT} = zeros(RT,M,N)
