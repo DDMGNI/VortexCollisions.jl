@@ -15,8 +15,8 @@ const nt = 10000
 const M = 64
 const N = 64
 
-const ℳcut = M
-const 𝒩cut = N
+const ℳcut = 0
+const 𝒩cut = 0
 
 
 const a = 1
