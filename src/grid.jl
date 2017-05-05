@@ -14,7 +14,7 @@ end
 function Grid2d(M, N; x1=0, x2=2π, y1=0, y2=2π)
     x = [x1 + i*(x2-x1)/M for i in 0:M-1]
     y = [y1 + j*(y2-y1)/N for j in 0:N-1]
-    normalisation = 4π^2 / M^2 / N^2
+    normalisation = (x2 - x1) * (y2 - y1) / M^2 / N^2
     Grid2d{M,N,typeof(normalisation)}(x, y, x1, x2, y1, y2, normalisation)
 end
 

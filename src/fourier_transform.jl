@@ -46,7 +46,7 @@ end
 """
 Plain (real) FFT.
 """
-function prfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Union{Matrix{RT},SharedArray{RT,2}}, û::Union{Matrix{CT},SharedArray{CT,2}})
+function prfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Matrix{RT}, û::Matrix{CT})
     A_mul_B!(û, ft.forw_plan, u)
 end
 
@@ -54,7 +54,7 @@ end
 """
 Filtered (real) FFT.
 """
-function frfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Union{Matrix{RT},SharedArray{RT,2}}, û::Union{Matrix{CT},SharedArray{CT,2}})
+function frfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, u::Matrix{RT}, û::Matrix{CT})
     A_mul_B!(û, ft.forw_plan, u)
     û .*= ft.χ
 end
@@ -62,7 +62,7 @@ end
 """
 Inverse (real) FFT.
 """
-function irfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, û::Union{Matrix{CT},SharedArray{CT,2}}, u::Union{Matrix{RT},SharedArray{RT,2}})
+function irfft!{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}, û::Matrix{CT}, u::Matrix{RT})
     A_mul_B!(u, ft.back_plan, û)
 end
 

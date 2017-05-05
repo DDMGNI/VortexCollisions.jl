@@ -76,9 +76,6 @@ function run_timings()
     print(" 3 steps:    ")
     @time for i in 1:3 timestep!(op, u₀, u₁, 1E-3) end
 
-    Profile.clear_malloc_data()
-    collision_operator!(op, u, divJ)
-
 end
 
 

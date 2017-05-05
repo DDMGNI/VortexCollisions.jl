@@ -5,9 +5,9 @@ function trapezoidal_quadrature{M,N,RT}(w::Matrix{RT}, v::Union{Array{RT,2},Shar
 
     local result::RT = 0
 
-    @inbounds for j1 in 1:size(v,2)
-        for i1 in 1:size(v,1)
-            result += w[i1,j1] * v[i1,j1]
+    @inbounds for j in 1:size(v,2)
+        for i in 1:size(v,1)
+            result += w[i,j] * v[i,j]
         end
     end
 

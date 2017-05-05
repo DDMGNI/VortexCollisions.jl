@@ -9,7 +9,7 @@ using VortexCollisions
 
 
 const Δt = 1E-6
-const nt = 2
+const nt = 10000
 
 const M = 64
 const N = 64

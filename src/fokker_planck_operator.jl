@@ -124,14 +124,22 @@ function initialize_workers{M,N,ℳ,𝒩,RT,CT}(op::FokkerPlanckOperator{M,N,ℳ
 end
 
 
-@generated function collision_operator!{M,N,ℳ,𝒩,RT,CT}(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT}, u::Matrix{RT}, divJ::Matrix{RT})
+@generated function collision_operator!{M,N,ℳ,𝒩,RT,CT,HT,MT,WT}(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT}, u::Matrix{RT}, divJ::Matrix{RT})
 
     local ϕ::Matrix{RT}
     local h::Matrix{RT}
+    local m::Matrix{RT}
+
+    local Du::Matrix{RT}
+    local Dh::Matrix{RT}
 
     local û::Matrix{CT}
     local ϕ̂::Matrix{CT}
     local ĥ::Matrix{CT}
+    local m̂::Matrix{CT}
+
+    local Dû::Matrix{CT}
+    local Dĥ::Matrix{CT}
 
     local J::Vector{Matrix{RT}}
     local Ĵ::Vector{Matrix{CT}}
@@ -141,10 +149,18 @@ end
 
     ϕ  = zeros(RT,M,N)
     h  = zeros(RT,M,N)
+    m  = zeros(RT,M,N)
+
+    Du = zeros(RT,M,N)
+    Dh = zeros(RT,M,N)
 
     û  = zeros(CT,ℳ,𝒩)
     ϕ̂  = zeros(CT,ℳ,𝒩)
     ĥ  = zeros(CT,ℳ,𝒩)
+    m̂  = zeros(CT,ℳ,𝒩)
+
+    Dû = zeros(CT,ℳ,𝒩)
+    Dĥ = zeros(CT,ℳ,𝒩)
 
     J  = [zeros(RT,M,N), zeros(RT,M,N)]
     Ĵ  = [zeros(CT,ℳ,𝒩), zeros(CT,ℳ,𝒩)]
@@ -160,8 +176,11 @@ end
         apply_operator!(op.Δ⁻¹, $û, $ϕ̂)
         irfft!(op.ft, $ϕ̂, $ϕ)
 
-        op.mfunc(u, op.m)
-        frfft!(op.ft, op.m, op.m̂)
+        op.mfunc(u, $m)
+        frfft!(op.ft, $m, $m̂)
+
+        op.m .= $m
+        op.m̂ .= $m̂
 
         op.hfunc(u, $ϕ, $h)
         frfft!(op.ft, $h, $ĥ)
@@ -169,13 +188,28 @@ end
         apply_operator!(op.D, $û, op.Dû)
         apply_operator!(op.D, $ĥ, op.Dĥ)
 
+        # FFT does not seem to work on Shared Array!
+        #
+        # for k in 1:length(op.Du)
+        #     irfft!(op.ft, op.Dû[k], op.Du[k])
+        # end
+        #
+        # for k in 1:length(op.Dh)
+        #     irfft!(op.ft, op.Dĥ[k], op.Dh[k])
+        # end
+
         for k in 1:length(op.Du)
-            irfft!(op.ft, op.Dû[k], op.Du[k])
+            $Dû .= op.Dû[k]
+            irfft!(op.ft, $Dû, $Du)
+            op.Du[k] .= $Du
         end
 
         for k in 1:length(op.Dh)
-            irfft!(op.ft, op.Dĥ[k], op.Dh[k])
+            $Dĥ .= op.Dĥ[k]
+            irfft!(op.ft, $Dĥ, $Dh)
+            op.Dh[k] .= $Dh
         end
+
 
         compute_convolution!(op)
 
