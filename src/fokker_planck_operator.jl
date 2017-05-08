@@ -1,7 +1,4 @@
 
-using ParallelDataTransfer
-
-
 struct FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT} <: CollisionOperator{M,N,ℳ,𝒩,RT,CT}
     grid::Grid2d{M,N,RT}
     ft::FourierTransform{ℳ,𝒩,RT,CT}

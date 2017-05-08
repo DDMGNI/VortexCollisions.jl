@@ -9,7 +9,6 @@ end
 using VortexCollisions
 
 
-const Δt = 1E-6
 const nt = 10000
 
 const M = 64
@@ -32,9 +31,15 @@ function u_init_sinx4(x,y)
 end
 
 
-function u_init_sin4x(x,y)
-    sin(4x)
+function u_init_sinx4siny4(x,y)
+    sin(x)^4 * sin(y)^4
 end
+
+
+function u_init_sinx4siny4etc(x,y)
+    sin(x)^4 * sin(y)^4 + 0.2 * sin(2x)^4 * sin(0.5 * y)^4
+end
+
 
 
 gr = Grid2d(M,N)
@@ -43,11 +48,13 @@ op = FokkerPlanckOperator(gr, ft)
 
 
 # test
-# run_simulation(op, 10, Δt, u_init_exp_cos, "FokkerPlanck_exp_cos_dt1E-6_nt10.h5")
-# run_simulation(op, 10, Δt, u_init_sinx4,   "FokkerPlanck_sinx4_dt1E-6_nt10.h5")
-# run_simulation(op, 10, Δt, u_init_sin4x,   "FokkerPlanck_sin4x_dt1E-6_nt10.h5")
+# run_simulation(op, 10, 1E-6, u_init_exp_cos,       "FokkerPlanck_exp_cos_dt1E-6_nt10.h5")
+# run_simulation(op, 10, 1E-3, u_init_sinx4,         "FokkerPlanck_sinx4_dt1E-3_nt10.h5")
+# run_simulation(op, 10, 1E-3, u_init_sinx4siny4,    "FokkerPlanck_sinx4siny4_dt1E-3_nt10.h5")
+# run_simulation(op, 10, 1E-3, u_init_sinx4siny4etc, "FokkerPlanck_sinx4siny4etc_dt1E-3_nt10.h5")
 
 # production
-# run_simulation(op, nt, Δt, u_init_exp_cos, "FokkerPlanck_exp_cos_dt1E-6_nt" * string(nt) * ".h5")
-# run_simulation(op, nt, Δt, u_init_sinx4,   "FokkerPlanck_sinx4_dt1E-6_nt" * string(nt) * ".h5")
-# run_simulation(op, nt, Δt, u_init_sin4x,   "FokkerPlanck_sin4x_dt1E-6_nt" * string(nt) * ".h5")
+# run_simulation(op, nt, 1E-6, u_init_exp_cos,       "FokkerPlanck_exp_cos_dt1E-6_nt"      * string(nt) * ".h5")
+# run_simulation(op, nt, 1e-3, u_init_sinx4,         "FokkerPlanck_sinx4_dt1E-3_nt"        * string(nt) * ".h5")
+# run_simulation(op, nt, 1e-3, u_init_sinx4siny4,    "FokkerPlanck_sinx4siny4_dt1E-3_nt"   * string(nt) * ".h5")
+# run_simulation(op, nt, 1e-3, u_init_sinx4siny4etc, "FokkerPlanck_sinx4sinyetc_dt1E-3_nt" * string(nt) * ".h5")

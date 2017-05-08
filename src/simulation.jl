@@ -46,6 +46,9 @@ function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,R
     h5ω = d_create(h5, "ω", datatype(RT), dataspace(M,N,nt+1), "chunk", (M,N,1))
 
 
+    # TODO Save grid and time steps to HDF5.
+
+
     # write initial conditions to HDF5 file
     write_solution_to_hdf5(op, u₀, 1, h5ϕ, h5ω)
 

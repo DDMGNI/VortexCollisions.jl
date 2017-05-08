@@ -19,6 +19,10 @@ function Grid2d(M, N; x1=0, x2=2π, y1=0, y2=2π)
 end
 
 
+# TODO Add constructor to read grid from HDF5.
+# TODO Add function to write grid to HDF5.
+
+
 function get_field{M,N,T}(grid::Grid2d{M,N,T})
     zeros(T, M, N)
 end
