@@ -41,22 +41,35 @@ xaxis = collect(1:nplot)-1;
 
 
 h = zeros(nplot)
-for n in 1:nplot
-    h[n] = sum_kbn(h5["ω"][:,:,n] .* h5["ϕ"][:,:,n])
-end
+h_err = zeros(nplot)
+# for n in 1:nplot
+#     h[n] = sum_kbn(h5["ω"][:,:,n] .* h5["ϕ"][:,:,n])
+# end
 
-h_err = (h-h[1])/h[1]
-h_max = maximum(h_err)
-h_min = minimum(h_err)
+# h_err = (h-h[1])/h[1]
+# h_max = maximum(h_err)
+# h_min = minimum(h_err)
+
+h1 = sum_kbn(h5["ω"][:,:,1]   .* h5["ϕ"][:,:,1])
+h2 = sum_kbn(h5["ω"][:,:,end] .* h5["ϕ"][:,:,end])
+
+h_max = maximum([0, (h2-h1)/h1])
+h_min = minimum([0, (h2-h1)/h1])
 
 ℰ = zeros(nplot)
-for n in 1:nplot
-    ℰ[n] = sum_kbn(h5["ω"][:,:,n] .* h5["ω"][:,:,n])
-end
+ℰ_err = zeros(nplot)
+# for n in 1:nplot
+#     ℰ[n] = sum_kbn(h5["ω"][:,:,n] .* h5["ω"][:,:,n])
+# end
 
-ℰ_err = (ℰ-ℰ[1])/ℰ[1]
-ℰ_max = maximum(ℰ_err)
-ℰ_min = minimum(ℰ_err)
+# ℰ_err = (ℰ-ℰ[1])/ℰ[1]
+# ℰ_max = maximum(ℰ_err)
+# ℰ_min = minimum(ℰ_err)
+
+ℰ1 = sum_kbn(h5["ω"][:,:,1]   .* h5["ω"][:,:,1])
+ℰ2 = sum_kbn(h5["ω"][:,:,end] .* h5["ω"][:,:,end])
+ℰ_max = maximum([0, (ℰ2-ℰ1)/ℰ1])
+ℰ_min = minimum([0, (ℰ2-ℰ1)/ℰ1])
 
 
 fig = figure(figsize=(16,10))
@@ -93,8 +106,11 @@ cntω = axω[:contour](ω, ωlevels, colors="k")
 
 scat = axs[:scatter](ϕ[:], ω[:])
 
-linesh = axh[:plot](xaxis[1:1], h_err[1:1])[1]
-linesℰ = axℰ[:plot](xaxis[1:1], ℰ_err[1:1])[1]
+# linesh = axh[:plot](xaxis[1:1], h_err[1:1])[1]
+# linesℰ = axℰ[:plot](xaxis[1:1], ℰ_err[1:1])[1]
+
+linesh = axh[:plot](xaxis[1:1], [0.])[1]
+linesℰ = axℰ[:plot](xaxis[1:1], [0.])[1]
 
 axϕ[:set_title]("ϕ",         fontsize=18)
 axω[:set_title]("ω",         fontsize=18)
@@ -125,6 +141,17 @@ for n in 1:nplot
     
 	ω = view(h5["ω"][:,:,n], :, :, 1)
 	ϕ = view(h5["ϕ"][:,:,n], :, :, 1)
+
+    h[n] = sum_kbn(ω[:,:] .* ϕ[:,:])
+    h_err[n] = (h[n]-h[1])/h[1]
+    # h_max = maximum(h_err)
+    # h_min = minimum(h_err)
+
+    ℰ[n] = sum_kbn(ω[:,:] .* ω[:,:])
+    ℰ_err[n] = (ℰ[n]-ℰ[1])/ℰ[1]
+    # ℰ_max = maximum(ℰ_err)
+    # ℰ_min = minimum(ℰ_err)
+
 
     for coll in cntϕ[:collections]
 		coll[:remove]()
