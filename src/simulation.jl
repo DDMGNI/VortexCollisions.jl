@@ -5,7 +5,7 @@ using HDF5
 """
 Initialise u₀ from uinit(x,y) function and run simulation.
 """
-function run_simulation(op::CollisionOperator, nt::Int, Δt::Number, uinit::Function, output::String)
+function run_simulation(op::CollisionOperator, nt::Int, Δt::Number, uinit::Function, output::String, nsave::Int=1)
     u₀ = get_field(op.grid)
 
     for j in 1:size(u₀,2)
@@ -14,14 +14,14 @@ function run_simulation(op::CollisionOperator, nt::Int, Δt::Number, uinit::Func
         end
     end
 
-    run_simulation(op, nt, Δt, u₀, output)
+    run_simulation(op, nt, Δt, u₀, output, nsave)
 end
 
 
 """
 Initialise u₀ from HDF5 file <input> and run simulation.
 """
-function run_simulation(op::CollisionOperator, nt::Int, Δt::Number, input::String, output::String)
+function run_simulation(op::CollisionOperator, nt::Int, Δt::Number, input::String, output::String, nsave::Int=1)
     u₀ = get_field(op.grid)
 
     h5open(input, "r") do h5
@@ -30,14 +30,14 @@ function run_simulation(op::CollisionOperator, nt::Int, Δt::Number, input::Stri
         u₀ .= h5.ω[:,:,end]
     end
 
-    run_simulation(op, nt, Δt, u₀, output)
+    run_simulation(op, nt, Δt, u₀, output, nsave)
 end
 
 
 """
 Run simulation for nt time steps Δt starting from u₀ and write output to HDF5 file <output>.
 """
-function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, nt::Int, Δt::RT, u₀::Matrix{RT}, output::String)
+function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, nt::Int, Δt::RT, u₀::Matrix{RT}, output::String, nsave::Int=1)
 
     # create HDF5 output file
     h5 = h5open(output, "w")
@@ -58,7 +58,7 @@ function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,R
 
     for n in 1:nt
         timestep!(op, u₀, u₁, Δt)
-        write_solution_to_hdf5(op, u₁, n+1, h5ϕ, h5ω)
+        mod(n, nsave) == 0 || n == nt ? write_solution_to_hdf5(op, u₁, n+1, h5ϕ, h5ω) : nothing
         u₀ .= u₁
     end
 
