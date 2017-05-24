@@ -60,6 +60,8 @@ function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,R
         timestep!(op, u₀, u₁, Δt)
         mod(n, nsave) == 0 || n == nt ? write_solution_to_hdf5(op, u₁, n+1, h5ϕ, h5ω) : nothing
         u₀ .= u₁
+
+        mod(n, 10*nsave) == 0 ? flush(h5) : nothing
     end
 
 
