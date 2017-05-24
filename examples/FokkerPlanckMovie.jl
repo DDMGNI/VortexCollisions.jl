@@ -171,6 +171,12 @@ for n in 1:nplot
 
     scat[:set_offsets](hcat(ϕ[:], ω[:]))
 	
+    if n == nplot
+        # "fit" of the final solution (for m=u)
+        λ = log(maximum(ω[:]))/maximum(ϕ[:])
+        axs[:scatter](ϕ[:], exp.(λ*ϕ[:]))
+    end
+
     linesh[:set_data](xaxis[1:n], h_err[1:n])
     linesℰ[:set_data](xaxis[1:n], ℰ_err[1:n])
 
