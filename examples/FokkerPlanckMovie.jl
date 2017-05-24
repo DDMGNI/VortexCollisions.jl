@@ -7,11 +7,16 @@
 runid = "FokkerPlanck_sinx4sinyetc_dt1E-3_nt10000"
 
 
-using PyPlot
 using PyCall
+
+@pyimport matplotlib as mpl
+mpl.use("Agg")
+mpl.interactive(false)
+
 @pyimport matplotlib.gridspec as gspec
 @pyimport matplotlib.colors   as clrs
 
+using PyPlot
 using HDF5
 
 
