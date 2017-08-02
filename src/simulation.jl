@@ -27,7 +27,7 @@ function run_simulation(op::CollisionOperator, nt::Int, Δt::Number, input::Stri
     h5open(input, "r") do h5
         @assert size(h5.ω,1) == size(op.grid,1)
         @assert size(h5.ω,2) == size(op.grid,2)
-        u₀ .= h5.ω[:,:,end]
+        u₀ .= view(h5["ω"][:,:,end], :, :, 1)
     end
 
     run_simulation(op, nt, Δt, u₀, output, nsave)
