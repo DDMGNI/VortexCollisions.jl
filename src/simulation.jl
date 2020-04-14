@@ -1,5 +1,6 @@
 
 using HDF5
+using ProgressMeter
 
 
 """
@@ -37,7 +38,7 @@ end
 """
 Run simulation for nt time steps Δt starting from u₀ and write output to HDF5 file <output>.
 """
-function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, nt::Int, Δt::RT, u₀::Matrix{RT}, output::String, nsave::Int=1)
+function run_simulation(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, nt::Int, Δt::RT, u₀::Matrix{RT}, output::String, nsave::Int=1) where {M,N,ℳ,𝒩,RT,CT}
 
     # create HDF5 output file
     h5 = h5open(output, "w")
@@ -54,9 +55,9 @@ function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,R
 
 
     # run for nt time steps
-    u₁ = zeros(u₀)
+    u₁ = zero(u₀)
 
-    for n in 1:nt
+    @showprogress 1 for n in 1:nt
         timestep!(op, u₀, u₁, Δt)
         mod(n, nsave) == 0 || n == nt ? write_solution_to_hdf5(op, u₁, n+1, h5ϕ, h5ω) : nothing
         u₀ .= u₁
@@ -71,7 +72,7 @@ function run_simulation{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,R
 end
 
 
-@generated function write_solution_to_hdf5{M,N,ℳ,𝒩,RT,CT}(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, u::Matrix{RT}, n::Int, h5ϕ::HDF5Dataset, h5ω::HDF5Dataset)
+@generated function write_solution_to_hdf5(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, u::Matrix{RT}, n::Int, h5ϕ::HDF5Dataset, h5ω::HDF5Dataset) where {M,N,ℳ,𝒩,RT,CT}
     local û::Matrix{CT} = zeros(CT,ℳ,𝒩)
     local ϕ̂::Matrix{CT} = zeros(CT,ℳ,𝒩)
     local ϕ::Matrix{RT} = zeros(RT,M,N)

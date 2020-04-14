@@ -1,6 +1,8 @@
-__precompile__()
-
 module VortexCollisions
+
+    using Distributed
+    using LinearAlgebra
+    using SharedArrays
 
     export Grid2d, get_field, frequencies
 

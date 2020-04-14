@@ -8,8 +8,8 @@ function testGradient()
     D    = get_gradient(ft)
 
     u  = get_field(grid)
-    ux = zeros(u)
-    uy = zeros(u)
+    ux = zero(u)
+    uy = zero(u)
 
     evaluate_function_on_grid(grid, u_test, u)
     evaluate_function_on_grid(grid, dudx_test, ux)
@@ -17,11 +17,11 @@ function testGradient()
 
     û = get_trans(ft)
     prfft!(ft, u, û)
-    Dû = [zeros(û), zeros(û)]
+    Dû = [zero(û), zero(û)]
     apply_operator!(D, û, Dû)
 
-    uxfft = zeros(ux)
-    uyfft = zeros(uy)
+    uxfft = zero(ux)
+    uyfft = zero(uy)
 
     irfft!(ft, Dû[1], uxfft)
     irfft!(ft, Dû[2], uyfft)
@@ -52,15 +52,15 @@ function testInverseLaplacian()
     prfft!(ft, u, uhat)
     prfft!(ft, f, fhat)
 
-    Δ⁻¹fhat = zeros(fhat)
+    Δ⁻¹fhat = zero(fhat)
 
     apply_operator!(Δ⁻¹, fhat, Δ⁻¹fhat)
 
-    u₀hat = zeros(uhat)
+    u₀hat = zero(uhat)
     u₀hat[1,1] = uhat[1,1]
 
-    Δ⁻¹f_fft = zeros(u)
-    u₀fft    = zeros(u)
+    Δ⁻¹f_fft = zero(u)
+    u₀fft    = zero(u)
 
     irfft!(ft, Δ⁻¹fhat, Δ⁻¹f_fft)
     irfft!(ft, u₀hat, u₀fft)

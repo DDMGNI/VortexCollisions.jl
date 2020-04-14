@@ -1,6 +1,6 @@
 
 using VortexCollisions
-using Base.Test
+using Test
 
 
 include("test_functions.jl")
@@ -11,3 +11,4 @@ include("test_fourier_operators.jl")
 include("test_fourier_quadrature.jl")
 include("test_trapezoidal_quadrature.jl")
 include("test_fokker_planck_operator.jl")
+include("test_fokker_planck_operator_kernel.jl")

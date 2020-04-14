@@ -1,6 +1,6 @@
 
 
-function trapezoidal_quadrature{M,N,RT}(w::Matrix{RT}, v::Union{Array{RT,2},SharedArray{RT,2}}, grid::Grid2d{M,N,RT})
+function trapezoidal_quadrature(w::Matrix{RT}, v::Union{Array{RT,2},SharedArray{RT,2}}, grid::Grid2d{M,N,RT}) where {M,N,RT}
     @assert size(v) == size(w)
 
     local result::RT = 0
@@ -19,7 +19,7 @@ function trapezoidal_quadrature{M,N,RT}(w::Matrix{RT}, v::Union{Array{RT,2},Shar
 end
 
 
-function trapezoidal_quadrature{M,N,RT}(w::Matrix{Matrix{RT}}, v::Union{Array{RT,2},SharedArray{RT,2}}, grid::Grid2d{M,N,RT})
+function trapezoidal_quadrature(w::Matrix{Matrix{RT}}, v::Union{Array{RT,2},SharedArray{RT,2}}, grid::Grid2d{M,N,RT}) where {M,N,RT}
     local result::Matrix{CT} = zeros(RT, size(w,1), size(w,2))
 
     for l in 1:size(w,2)
@@ -32,7 +32,7 @@ function trapezoidal_quadrature{M,N,RT}(w::Matrix{Matrix{RT}}, v::Union{Array{RT
 end
 
 
-function trapezoidal_quadrature{M,N,RT}(w::Matrix{Matrix{RT}}, v::Union{Vector{Array{RT,2}},Vector{SharedArray{RT,2}}}, grid::Grid2d{M,N,RT})
+function trapezoidal_quadrature(w::Matrix{Matrix{RT}}, v::Union{Vector{Array{RT,2}},Vector{SharedArray{RT,2}}}, grid::Grid2d{M,N,RT}) where {M,N,RT}
     @assert size(w,2) == length(v)
 
     local result::Vector{CT} = zeros(RT, size(w,1))

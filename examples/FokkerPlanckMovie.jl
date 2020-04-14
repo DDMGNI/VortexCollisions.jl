@@ -1,10 +1,11 @@
 
-#runid = "FokkerPlanck_dt1E-6_nt10000"
-#runid = "FokkerPlanck_exp_cos_dt1E-6_nt10000"
-#runid = "FokkerPlanck_sin4xsin2y_dt1E-6_nt10000"
-#runid = "FokkerPlanck_sinx4_dt1E+3_nt100"
-#runid = "FokkerPlanck_sinx4siny4_dt1E-3_nt10000"
-runid = "FokkerPlanck_sinx4sinyetc_dt1E-3_nt10000"
+runid = "FokkerPlanck_exp_cos_dt1E-6_nt10"
+# runid = "FokkerPlanck_dt1E-6_nt10000"
+# runid = "FokkerPlanck_exp_cos_dt1E-6_nt10000"
+# runid = "FokkerPlanck_sin4xsin2y_dt1E-6_nt10000"
+# runid = "FokkerPlanck_sinx4_dt1E+3_nt100"
+# runid = "FokkerPlanck_sinx4siny4_dt1E-3_nt10000"
+# runid = "FokkerPlanck_sinx4sinyetc_dt1E-3_nt10000"
 
 
 using PyCall
@@ -18,6 +19,7 @@ mpl.interactive(false)
 
 using PyPlot
 using HDF5
+using KahanSummation
 
 
 h5 = h5open(runid * ".h5", "r")
@@ -26,7 +28,7 @@ nplot = size(h5["ω"],3)
 #nplot = 200
 #nplot = 2
 
-xaxis = collect(1:nplot)-1;
+xaxis = collect(1:nplot) .- 1;
 
 ϕ = view(h5["ϕ"][:,:,1], :, :, 1)
 ω = view(h5["ω"][:,:,1], :, :, 1)
@@ -136,9 +138,9 @@ axℰ[:set_ylabel]("(ℰ-ℰ₀)/ℰ₀", fontsize=16)
 
 
 for n in 1:nplot
-	
+
 	println("Plotting frame " * @sprintf("%8i", n-1))
-    
+
 	ω = view(h5["ω"][:,:,n], :, :, 1)
 	ϕ = view(h5["ϕ"][:,:,n], :, :, 1)
 
@@ -156,21 +158,21 @@ for n in 1:nplot
     for coll in cntϕ[:collections]
 		coll[:remove]()
     end
-        
+
 	for coll in cntω[:collections]
 		coll[:remove]()
 	end
-    
+
     pcmϕ[:set_array](ϕ[:])
     pcmω[:set_array](ω[:])
-	
+
 #	cntϕ = axϕ[:contour](ϕ, ncnt, colors="k", norm=ϕnorm)
 #	cntω = axω[:contour](ω, ncnt, colors="k", norm=ωnorm)
 	cntϕ = axϕ[:contour](ϕ, ϕlevels, colors="k")
 	cntω = axω[:contour](ω, ωlevels, colors="k")
 
     scat[:set_offsets](hcat(ϕ[:], ω[:]))
-	
+
     if n == nplot
         # "fit" of the final solution (for m=u)
         λ = log(maximum(ω[:]))/maximum(ϕ[:])
@@ -183,7 +185,6 @@ for n in 1:nplot
 	savefig(runid * "_movie_" * @sprintf("%08i", n-1) * ".png", dpi=150)
 
 end
-
 
 close(fig)
 

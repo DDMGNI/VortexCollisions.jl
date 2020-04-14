@@ -1,5 +1,6 @@
 
 using Distributed
+using Profile
 
 if haskey(ENV, "JULIA_NUM_THREADS")
     nw = parse(Int, ENV["JULIA_NUM_THREADS"])
@@ -9,16 +10,20 @@ else
 end
 
 const nt = 10
-const nx = 16
-const ny = 8
+const nx = 160
+const ny = 80
 const Δt = 1E-1
 
 
-@everywhere using SharedArrays
+@everywhere begin
+    using Pkg; Pkg.activate(".")  # required
+    using SharedArrays
+end
 
 @everywhere module CollisionOperator
 
     using Distributed
+    using ParallelDataTransfer
     using SharedArrays
 
     export run_simulation
@@ -60,8 +65,18 @@ const Δt = 1E-1
 
 
     function run_simulation(nt::Int, nx::Int, ny::Int, Δt::Number, uinit::Function, mfunc::Function)
-        grid = Grid2d(nx,ny)
+        # grid = Grid2d(nx,ny)
+        mgrid = Grid2d(nx,ny)
         rk   = RungeKutta(nx, ny, Δt)
+
+        Core.eval(CollisionOperator, Expr(:(=), :grid, mgrid))
+        # @eval @everywhere grid = $grid
+        @sync for (p,w) in enumerate(workers())
+            # @spawnat(w, Core.eval(CollisionOperator, Expr(:(=), :grid, mgrid)))
+            @spawnat(w, Core.eval(CollisionOperator, quote grid = Grid2d($nx,$ny) end))
+        end
+
+        # @passobj 1 workers() grid
 
         u₀ = zeros(nx,ny)
         u₁ = zeros(nx,ny)
@@ -69,13 +84,13 @@ const Δt = 1E-1
         # compute initial conditions
         for j in 1:size(u₀,2)
             for i in 1:size(u₀,1)
-                 u₀[i,j]  = uinit(grid.x[i], grid.y[j])
+                 u₀[i,j] = uinit(mgrid.x[i], mgrid.y[j])
             end
         end
 
         # run for nt time steps
-        for n in 1:nt
-            timestep!(grid, rk, mfunc, u₀, u₁)
+        @time for n in 1:nt
+            timestep!(mgrid, rk, mfunc, u₀, u₁)
             # ...
             # save solution
             # ...
@@ -85,16 +100,17 @@ const Δt = 1E-1
 
 
     "Runge-Kutta time stepping algorithm solving u'=f(u)"
-    function timestep!(grid::Grid2d{M,N,T}, rk::RungeKutta{M,N,T}, mfunc::Function, u₀::Matrix{T}, u₁::Matrix{T}) where {M,N,T}
+    # function timestep!(grid::Grid2d{M,N,T}, rk::RungeKutta{M,N,T}, mfunc::Function, u₀::Matrix{T}, u₁::Matrix{T}) where {M,N,T}
+    function timestep!(grid, rk::RungeKutta{M,N,T}, mfunc::Function, u₀::Matrix{T}, u₁::Matrix{T}) where {M,N,T}
         @assert size(u₀) == size(u₁) == (M,N)
 
         # compute intermediate steps
         rk.u[1] .= u₀
-        collision_operator!(grid, mfunc, rk.u[1], rk.f[1])
+        collision_operator!(grid, rk, mfunc, rk.u[1], rk.f[1])
 
         for i in 2:length(rk.a)
             rk.u[i] .= u₀ .+ rk.Δt .* rk.a[i] .* rk.f[i-1]
-            collision_operator!(grid, mfunc, rk.u[i], rk.f[i])
+            collision_operator!(grid, rk, mfunc, rk.u[i], rk.f[i])
         end
 
         # compute final solution
@@ -106,7 +122,8 @@ const Δt = 1E-1
 
 
     "Collison operator: computes the vector field f(u) where f is a complicated integro-differential operator"
-    function collision_operator!(grid::Grid2d{M,N,T}, m::Function, u::SharedArray{T,2}, f::SharedArray{T,2}) where {M,N,T}
+    # function collision_operator!(grid::Grid2d{M,N,T}, m::Function, u::SharedArray{T,2}, f::SharedArray{T,2}) where {M,N,T}
+    function collision_operator!(tmp, rk::RungeKutta{M,N,T}, m::Function, u::SharedArray{T,2}, f::SharedArray{T,2}) where {M,N,T}
         # ...
         # do something not too expensive
         # ...
@@ -115,32 +132,43 @@ const Δt = 1E-1
         if nworkers() > 1
             wn = div(N, nworkers())
 
-            # @sync @distributed for j = 1:N
-            #     convolution_kernel!(grid, j, j, m, u, f)
+            # @Threads.threads for p in 1:nworkers()
+            #     j1 = wn*(p-1) + 1
+            #     j2 = wn*p
+            #     convolution_kernel!(grid, M, N, j1, j2, m, u, f)
+            # end
+
+            # @Threads.threads for j in 1:N
+            #     convolution_kernel!(grid, M, N, j, j, m, u, f)
+            # end
+
+            # @sync @distributed for j in 1:N
+            #     convolution_kernel!(grid, M, N, j, j, m, u, f)
             # end
 
             @sync for (p,w) in enumerate(workers())
                 j1 = wn*(p-1) + 1
                 j2 = wn*p
                 @spawnat w begin
-                    convolution_kernel!(grid, j1, j2, m, u, f)
+                    convolution_kernel!(grid, M, N, j1, j2, m, u, f)
                 end
             end
 
             # @sync for (p,w) in enumerate(workers())
             #     j1 = wn*(p-1) + 1
             #     j2 = wn*p
-            #     @async remotecall_wait(convolution_kernel!, w, grid, j1, j2, m, u, f)
+            #     @async remotecall_wait(convolution_kernel!, w, grid, M, N, j1, j2, m, u, f)
             # end
 
         else
-            convolution_kernel!(grid, 1, N, m, u, f)
+            convolution_kernel!(grid, M, N, 1, N, m, u, f)
         end
     end
 
 
     "Convolution kernel: most expensive part in vector field computation"
-    @generated function convolution_kernel!(grid::Grid2d{M,N,T}, j1::Int, j2::Int, m::Function, u::SharedArray{T,2}, f::SharedArray{T,2}) where {M,N,T}
+    # @generated function convolution_kernel!(grid::Grid2d{M,N,T}, j1::Int, j2::Int, m::Function, u::SharedArray{T,2}, f::SharedArray{T,2}) where {M,N,T}
+    @generated function convolution_kernel!(mgrid, M, N, j1::Int, j2::Int, m::Function, u::SharedArray{T,2}, f::SharedArray{T,2}) where {T}
         # ...
         # create some local arrays
         # ...
@@ -151,6 +179,11 @@ const Δt = 1E-1
                     # ...
                     # do some expensive computation involving the function m()
                     # ...
+                    f[i,j] = rand()
+                    for k in 1:100
+                        f[i,j] += cbrt(rand())^3.14159265359 + sqrt(rand())^2.71828182846
+                    end
+                    u[i,j] = cosh(mgrid.x[i]) + sinh(mgrid.y[j]) + exp(f[i,j])
                 end
             end
         end
@@ -176,4 +209,8 @@ using .CollisionOperator
 run_simulation(nt, nx, ny, Δt, u_init, m_func!)
 
 # timing
-@time run_simulation(nt, nx, ny, Δt, u_init, m_func!)
+run_simulation(nt, nx, ny, Δt, u_init, m_func!)
+
+# profile
+Profile.clear_malloc_data()
+run_simulation(nt, nx, ny, Δt, u_init, m_func!)

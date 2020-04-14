@@ -1,17 +1,15 @@
 
-
-
 """
 Apply fourier operator v ← op * u
 """
-function apply_operator!{CT}(op::Matrix{CT}, u::Union{Matrix{CT},SharedArray{CT,2}}, v::Union{Matrix{CT},SharedArray{CT,2}})
+function apply_operator!(op::Matrix{CT}, u::Union{Matrix{CT},SharedArray{CT,2}}, v::Union{Matrix{CT},SharedArray{CT,2}}) where {CT}
     v .= op .* u
 end
 
 """
 Apply fourier operator v[i] ← op[i] * u for i in 1:length(op)
 """
-function apply_operator!{CT}(op::Vector{Matrix{CT}}, u::Union{Matrix{CT},SharedArray{CT,2}}, v::Union{Vector{Matrix{CT}},Vector{SharedArray{CT,2}}})
+function apply_operator!(op::Vector{Matrix{CT}}, u::Union{Matrix{CT},SharedArray{CT,2}}, v::Union{Vector{Matrix{CT}},Vector{SharedArray{CT,2}}}) where {CT}
     for k in 1:length(op)
         v[k] .= op[k] .* u
     end
@@ -20,7 +18,7 @@ end
 """
 Apply fourier operator v ← sum_i op[i] * u[i]
 """
-function apply_operator!{CT}(op::Vector{Matrix{CT}}, u::Union{Vector{Matrix{CT}},Vector{SharedArray{CT,2}}}, v::Union{Matrix{CT},SharedArray{CT,2}})
+function apply_operator!(op::Vector{Matrix{CT}}, u::Union{Vector{Matrix{CT}},Vector{SharedArray{CT,2}}}, v::Union{Matrix{CT},SharedArray{CT,2}}) where {CT}
     @assert length(op) == length(u)
     fill!(v, 0)
     for k in 1:length(op)
@@ -28,8 +26,10 @@ function apply_operator!{CT}(op::Vector{Matrix{CT}}, u::Union{Vector{Matrix{CT}}
     end
 end
 
-
-function get_gradient{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT})
+"""
+Returns gradient operator
+"""
+function get_gradient(ft::FourierTransform{ℳ,𝒩,RT,CT}) where {ℳ,𝒩,RT,CT}
     D₁ = zeros(CT, ℳ, 𝒩)
     D₂ = zeros(CT, ℳ, 𝒩)
 
@@ -43,8 +43,10 @@ function get_gradient{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT})
     [D₁, D₂]
 end
 
-
-function get_inverse_laplacian{ℳ,𝒩,RT,CT}(ft::FourierTransform{ℳ,𝒩,RT,CT}; sign=+1)
+"""
+Returns inverse Laplacian operator
+"""
+function get_inverse_laplacian(ft::FourierTransform{ℳ,𝒩,RT,CT}; sign=+1) where {ℳ,𝒩,RT,CT}
     Δ⁻¹ = zeros(CT, ℳ, 𝒩)
 
     for s in 1:𝒩

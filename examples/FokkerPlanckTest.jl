@@ -48,7 +48,8 @@ op = FokkerPlanckOperator(gr, ft)
 
 
 # test
-run_simulation(op, 10, 1E-6, u_init_exp_cos,       "FokkerPlanck_exp_cos_dt1E-6_nt10.h5")
+run_simulation(op, 100, 1E-6, u_init_exp_cos,       "FokkerPlanck_exp_cos_dt1E-6_nt100.h5")
+# run_simulation(op, 10, 1E-6, u_init_exp_cos,       "FokkerPlanck_exp_cos_dt1E-6_nt10.h5")
 # run_simulation(op, 10, 1E-3, u_init_sinx4,         "FokkerPlanck_sinx4_dt1E-3_nt10.h5")
 # run_simulation(op, 10, 1E-3, u_init_sinx4siny4,    "FokkerPlanck_sinx4siny4_dt1E-3_nt10.h5")
 # run_simulation(op, 10, 1E-3, u_init_sinx4siny4etc, "FokkerPlanck_sinx4siny4etc_dt1E-3_nt10.h5")

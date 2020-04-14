@@ -1,4 +1,5 @@
 
+
 struct FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT} <: CollisionOperator{M,N,ℳ,𝒩,RT,CT}
     grid::Grid2d{M,N,RT}
     ft::FourierTransform{ℳ,𝒩,RT,CT}
@@ -35,27 +36,21 @@ struct FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT} <: CollisionOperator{M,
         m̂  = SharedArray{CT}((ℳ,𝒩))
 
         𝔽 = [SharedArray{RT}((M,N)), SharedArray{RT}((M,N))]
-        𝔻 = Array{SharedArray{RT,2}}(2,2)
-
-        for l in 1:size(𝔻,2)
-            for k in 1:size(𝔻,1)
-                𝔻[k,l] = SharedArray{RT}((M,N))
-            end
-        end
+        𝔻 = [SharedArray{RT}((M,N)) for k ∈ 1:2, l ∈ 1:2]
 
         new(grid, ft, D, Δ⁻¹, hfunc, mfunc, wfunc, Du, Dh, m, Dû, Dĥ, m̂, 𝔽, 𝔻)
     end
 end
 
-function FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT}(grid::Grid2d{M,N,RT}, ft::FourierTransform{ℳ,𝒩,RT,CT};
-                                              hfunc=hfunc_fokker_planck!, mfunc=mfunc_fokker_planck!, wfunc=wfunc_fokker_planck!)
+function FokkerPlanckOperator(grid::Grid2d{M,N,RT}, ft::FourierTransform{ℳ,𝒩,RT,CT};
+                              hfunc=hfunc_fokker_planck!, mfunc=mfunc_fokker_planck!, wfunc=wfunc_fokker_planck!) where {M,N,ℳ,𝒩,RT,CT}
     op = FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT, typeof(hfunc), typeof(mfunc), typeof(wfunc)}(grid, ft, hfunc, mfunc, wfunc)
     nworkers() > 1 ? initialize_workers(op, ft.ℳcut, ft.𝒩cut) : nothing
     return op
 end
 
 
-function initialize_workers{M,N,ℳ,𝒩,RT,CT}(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT}, ℳcut=0, 𝒩cut=0)
+function initialize_workers(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT}, ℳcut=0, 𝒩cut=0) where {M,N,ℳ,𝒩,RT,CT}
     # # add parallel workers
     # if haskey(ENV, "JULIA_NUM_THREADS")
     #     nw = parse(Int, ENV["JULIA_NUM_THREADS"])
@@ -79,30 +74,34 @@ function initialize_workers{M,N,ℳ,𝒩,RT,CT}(op::FokkerPlanckOperator{M,N,ℳ
 
     local wn::Int = div(N, nworkers())
 
+    # @eval @everywhere Dh = $gDh
+    # @eval @everywhere Du = $gDu
+    # @eval @everywhere m  = $gm
+
     @sync for (p,w) in enumerate(workers())
         @spawnat w begin
 
-            global const Dh = gDh
-            global const Du = gDu
-            global const m  = gm
+            global Dh = gDh
+            global Du = gDu
+            global m  = gm
 
-            global const Dû = gDû
-            global const m̂  = gm̂
+            global Dû = gDû
+            global m̂  = gm̂
 
-            global const 𝔽  = g𝔽
-            global const 𝔻  = g𝔻
+            global 𝔽  = g𝔽
+            global 𝔻  = g𝔻
 
-            global const wfunc = gwfunc
+            global wfunc = gwfunc
 
-            global const j1 = wn*(p-1) + 1
-            global const j2 = wn*p
+            global j1 = wn*(p-1) + 1
+            global j2 = wn*p
 
-            global const gr = Grid2d(M,N)
-            global const ft = FourierTransform(gr, ℳcut=ℳcut, 𝒩cut=𝒩cut)
+            global gr = Grid2d(M,N)
+            global ft = FourierTransform(gr, ℳcut=ℳcut, 𝒩cut=𝒩cut)
 
-            # global const lg = [zeros(RT,M,N), zeros(RT,M,N)]
-            # global const lw = Array{Array{RT,2}}(2,2)
-            # global const lŵ = Array{Array{CT,2}}(2,2)
+            # global lg = [zeros(RT,M,N), zeros(RT,M,N)]
+            # global lw = Array{Array{RT,2}}(2,2)
+            # global lŵ = Array{Array{CT,2}}(2,2)
             #
             # for l in 1:size(lw,2)
             #     for k in 1:size(lw,1)
@@ -121,7 +120,7 @@ function initialize_workers{M,N,ℳ,𝒩,RT,CT}(op::FokkerPlanckOperator{M,N,ℳ
 end
 
 
-@generated function collision_operator!{M,N,ℳ,𝒩,RT,CT,HT,MT,WT}(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT}, u::Matrix{RT}, divJ::Matrix{RT})
+@generated function collision_operator!(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT}, u::Matrix{RT}, divJ::Matrix{RT}) where {M,N,ℳ,𝒩,RT,CT,HT,MT,WT}
 
     local ϕ::Matrix{RT}
     local h::Matrix{RT}
@@ -237,14 +236,25 @@ end
 end
 
 
-function compute_convolution!{M,N,ℳ,𝒩,RT,CT}(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT})
+function compute_convolution!(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT}) where {M,N,ℳ,𝒩,RT,CT}
     if nworkers() > 1
+        # @sync @parallel for j = 1:N
+        #     # convolution_kernel_fourier!(gr, ft, j, j, wfunc, Dh, Dû, m̂, 𝔽, 𝔻)
+        #     convolution_kernel_trapezoidal!(gr, j, j, wfunc, Dh, Du, m, 𝔽, 𝔻)
+        # end
+
         @sync for w in workers()
             @spawnat w begin
                 # convolution_kernel_fourier!(gr, ft, j1, j2, wfunc, Dh, Dû, m̂, 𝔽, 𝔻)
                 convolution_kernel_trapezoidal!(gr, j1, j2, wfunc, Dh, Du, m, 𝔽, 𝔻)
             end
         end
+
+        # @sync for w in workers()
+        #     # @async remotecall_wait(convolution_kernel_fourier!, w, gr, ft, j1, j2, wfunc, Dh, Dû, m̂, 𝔽, 𝔻)
+        #     @async remotecall_wait(convolution_kernel_trapezoidal!, w, gr, j1, j2, wfunc, Dh, Du, m, 𝔽, 𝔻)
+        # end
+
     else
         # convolution_kernel_fourier!(op.grid, op.ft, 1, N, op.wfunc, op.Dh, op.Dû, op.m̂, op.𝔽, op.𝔻)
         convolution_kernel_trapezoidal!(op.grid, 1, N, op.wfunc, op.Dh, op.Du, op.m, op.𝔽, op.𝔻)
@@ -252,9 +262,9 @@ function compute_convolution!{M,N,ℳ,𝒩,RT,CT}(op::FokkerPlanckOperator{M,N,�
 end
 
 
-@generated function convolution_kernel_fourier!{M,N,ℳ,𝒩,RT,CT}(gr::Grid2d{M,N}, ft::FourierTransform{ℳ,𝒩,RT,CT}, j1::Int, j2::Int, wfunc::Function,
-                                                                Dh::Vector{SharedArray{RT,2}}, Dû::Vector{SharedArray{CT,2}}, m̂::SharedArray{CT,2},
-                                                                𝔽::Vector{SharedArray{RT,2}}, 𝔻::Matrix{SharedArray{RT,2}})
+@generated function convolution_kernel_fourier!(gr::Grid2d{M,N}, ft::FourierTransform{ℳ,𝒩,RT,CT}, j1::Int, j2::Int, wfunc::Function,
+                                                Dh::Vector{SharedArray{RT,2}}, Dû::Vector{SharedArray{CT,2}}, m̂::SharedArray{CT,2},
+                                                𝔽::Vector{SharedArray{RT,2}}, 𝔻::Matrix{SharedArray{RT,2}}) where {M,N,ℳ,𝒩,RT,CT}
 
     local g::Vector{Matrix{RT}} = [zeros(RT,M,N), zeros(RT,M,N)]
     local w::Matrix{Matrix{RT}} = Array{Array{RT,2}}(2,2)
@@ -312,18 +322,12 @@ end
 end
 
 
-@generated function convolution_kernel_trapezoidal!{M,N,RT}(gr::Grid2d{M,N}, j1::Int, j2::Int, wfunc::Function,
-                                                            Dh::Vector{SharedArray{RT,2}}, Du::Vector{SharedArray{RT,2}}, m::SharedArray{RT,2},
-                                                            𝔽::Vector{SharedArray{RT,2}}, 𝔻::Matrix{SharedArray{RT,2}})
+@generated function convolution_kernel_trapezoidal!(gr::Grid2d{M,N}, j1::Int, j2::Int, wfunc::Function,
+                                                    Dh::Vector{SharedArray{RT,2}}, Du::Vector{SharedArray{RT,2}}, m::SharedArray{RT,2},
+                                                    𝔽::Vector{SharedArray{RT,2}}, 𝔻::Matrix{SharedArray{RT,2}}) where {M,N,RT}
 
     local g::Vector{Matrix{RT}} = [zeros(RT,M,N), zeros(RT,M,N)]
-    local w::Matrix{Matrix{RT}} = Array{Array{RT,2}}(2,2)
-
-    for l in 1:size(w,2)
-        for k in 1:size(w,1)
-            w[k,l] = zeros(RT,M,N)
-        end
-    end
+    local w::Matrix{Matrix{RT}} = [zeros(RT,M,N) for k ∈ 1:2, l ∈ 1:2]
 
 
     quote
@@ -359,17 +363,17 @@ end
 end
 
 
-function mfunc_fokker_planck!{RT}(u::Matrix{RT}, m::Union{Array{RT,2},SharedArray{RT,2}})
+function mfunc_fokker_planck!(u::Matrix{RT}, m::Union{Array{RT,2},SharedArray{RT,2}}) where {RT}
     m .= 1
 end
 
 
-function hfunc_fokker_planck!{RT}(u::Matrix{RT}, ϕ::Matrix{RT}, h::Union{Array{RT,2},SharedArray{RT,2}})
+function hfunc_fokker_planck!(u::Matrix{RT}, ϕ::Matrix{RT}, h::Union{Array{RT,2},SharedArray{RT,2}}) where {RT}
     h .= ϕ
 end
 
 
-@generated function wfunc_fokker_planck!{M,N,RT}(grid::Grid2d{M,N,RT}, i::Int, j::Int, g::Vector{Matrix{RT}}, w::Matrix{Matrix{RT}})
+@generated function wfunc_fokker_planck!(grid::Grid2d{M,N,RT}, i::Int, j::Int, g::Vector{Matrix{RT}}, w::Matrix{Matrix{RT}}) where {M,N,RT}
     # local g¹::Matrix{RT} = zeros(RT,M,N)
     local g²::Matrix{RT} = zeros(RT,M,N)
 

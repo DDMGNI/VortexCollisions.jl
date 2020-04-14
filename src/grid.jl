@@ -23,12 +23,12 @@ end
 # TODO Add function to write grid to HDF5.
 
 
-function get_field{M,N,T}(grid::Grid2d{M,N,T})
+function get_field(grid::Grid2d{M,N,T}) where {M,N,T}
     zeros(T, M, N)
 end
 
 
-@generated function frequencies{M, N, T <: Integer}(r::T, s::T, grid::Grid2d{M,N})
+@generated function frequencies(r::T, s::T, grid::Grid2d{M,N}) where {M, N, T <: Integer}
     m = circshift(collect(-div(M-1,2):div(M,2)), -div(M-1,2))
     n = collect(0:div(N,2))
 

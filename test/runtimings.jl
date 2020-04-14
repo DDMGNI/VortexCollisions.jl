@@ -26,14 +26,14 @@ function run_timings()
     u = get_field(grid)
     û = get_trans(ft)
 
-    Δ⁻¹û = zeros(û)
-    Dû   = [zeros(û), zeros(û)]
+    Δ⁻¹û = zero(û)
+    Dû   = [zero(û), zero(û)]
 
-    Δ⁻¹u = zeros(u)
-    divJ = zeros(u)
+    Δ⁻¹u = zero(u)
+    divJ = zero(u)
 
-    u₀ = zeros(u)
-    u₁ = zeros(u)
+    u₀ = zero(u)
+    u₁ = zero(u)
 
     evaluate_function_on_grid(grid, u_test, u)
 
