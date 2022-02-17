@@ -172,13 +172,13 @@ end
         apply_operator!(op.Δ⁻¹, $û, $ϕ̂)
         irfft!(op.ft, $ϕ̂, $ϕ)
 
-        op.mfunc(u, $m)
+        op.mfunc(u, $m, op.grid)
         frfft!(op.ft, $m, $m̂)
 
         op.m .= $m
         op.m̂ .= $m̂
 
-        op.hfunc(u, $ϕ, $h)
+        op.hfunc(u, $ϕ, $h, op.grid)
         frfft!(op.ft, $h, $ĥ)
 
         apply_operator!(op.D, $û, op.Dû)
@@ -363,12 +363,12 @@ end
 end
 
 
-function mfunc_fokker_planck!(u::Matrix{RT}, m::Union{Array{RT,2},SharedArray{RT,2}}) where {RT}
+function mfunc_fokker_planck!(u::Matrix{RT}, m::Union{Array{RT,2},SharedArray{RT,2}}, grid::Grid2d) where {RT}
     m .= 1
 end
 
 
-function hfunc_fokker_planck!(u::Matrix{RT}, ϕ::Matrix{RT}, h::Union{Array{RT,2},SharedArray{RT,2}}) where {RT}
+function hfunc_fokker_planck!(u::Matrix{RT}, ϕ::Matrix{RT}, h::Union{Array{RT,2},SharedArray{RT,2}}, grid::Grid2d) where {RT}
     h .= ϕ
 end
 
