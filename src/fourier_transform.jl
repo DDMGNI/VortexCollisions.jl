@@ -11,7 +11,7 @@ struct FourierTransform{ℳ, 𝒩, RT <: Number, CT <: Number}
     χ::Matrix{RT}
     μ::Matrix{CT}
     forw_plan::FFTW.rFFTWPlan{RT,-1,false,2}
-    back_plan::AbstractFFTs.ScaledPlan{CT,FFTW.rFFTWPlan{CT,1,false,2},RT}
+    back_plan::AbstractFFTs.ScaledPlan{CT, FFTW.rFFTWPlan{CT, 1, false, 2, Tuple{Int,Int}}, RT}
 end
 
 function FourierTransform(grid::Grid2d{M,N,RT}; ℳcut::Int=0, 𝒩cut::Int=0) where {M,N,RT}

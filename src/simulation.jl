@@ -3,6 +3,58 @@ using HDF5
 using ProgressMeter
 
 
+@generated function write_solution_to_hdf5(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, u::Matrix{RT}, n::Int, h5ϕ::HDF5.Dataset, h5ω::HDF5.Dataset) where {M,N,ℳ,𝒩,RT,CT}
+    local û::Matrix{CT} = zeros(CT,ℳ,𝒩)
+    local ϕ̂::Matrix{CT} = zeros(CT,ℳ,𝒩)
+    local ϕ::Matrix{RT} = zeros(RT,M,N)
+
+    quote
+        prfft!(op.ft, u, $û)
+        $ϕ̂ .= op.Δ⁻¹ .* $û
+        irfft!(op.ft, $ϕ̂, $ϕ)
+
+        h5ϕ[:,:,n] = $ϕ
+        h5ω[:,:,n] = u
+    end
+end
+
+
+"""
+Run simulation for nt time steps Δt starting from u₀ and write output to HDF5 file <output>.
+"""
+function run_simulation(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, nt::Int, Δt::RT, u₀::Matrix{RT}, output::String, nsave::Int=1) where {M,N,ℳ,𝒩,RT,CT}
+
+    # create HDF5 output file
+    h5 = h5open(output, "w")
+
+    h5ϕ = create_dataset(h5, "ϕ", RT, ((M,N,nt+1), (M,N,-1)), chunk=(M,N,1))
+    h5ω = create_dataset(h5, "ω", RT, ((M,N,nt+1), (M,N,-1)), chunk=(M,N,1))
+
+    # TODO Save grid and time steps to HDF5.
+
+
+    # write initial conditions to HDF5 file
+    write_solution_to_hdf5(op, u₀, 1, h5ϕ, h5ω)
+
+
+    # run for nt time steps
+    u₁ = zero(u₀)
+
+    @showprogress 1 for n in 1:nt
+        timestep!(op, u₀, u₁, Δt)
+        mod(n, nsave) == 0 || n == nt ? write_solution_to_hdf5(op, u₁, n+1, h5ϕ, h5ω) : nothing
+        u₀ .= u₁
+
+        mod(n, 10*nsave) == 0 ? flush(h5) : nothing
+    end
+
+
+    # close HDF5 output file
+    close(h5)
+
+end
+
+
 """
 Initialise u₀ from uinit(x,y) function and run simulation.
 """
@@ -32,57 +84,4 @@ function run_simulation(op::CollisionOperator, nt::Int, Δt::Number, input::Stri
     end
 
     run_simulation(op, nt, Δt, u₀, output, nsave)
-end
-
-
-"""
-Run simulation for nt time steps Δt starting from u₀ and write output to HDF5 file <output>.
-"""
-function run_simulation(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, nt::Int, Δt::RT, u₀::Matrix{RT}, output::String, nsave::Int=1) where {M,N,ℳ,𝒩,RT,CT}
-
-    # create HDF5 output file
-    h5 = h5open(output, "w")
-
-    h5ϕ = d_create(h5, "ϕ", datatype(RT), dataspace(M,N,nt+1), "chunk", (M,N,1))
-    h5ω = d_create(h5, "ω", datatype(RT), dataspace(M,N,nt+1), "chunk", (M,N,1))
-
-
-    # TODO Save grid and time steps to HDF5.
-
-
-    # write initial conditions to HDF5 file
-    write_solution_to_hdf5(op, u₀, 1, h5ϕ, h5ω)
-
-
-    # run for nt time steps
-    u₁ = zero(u₀)
-
-    @showprogress 1 for n in 1:nt
-        timestep!(op, u₀, u₁, Δt)
-        mod(n, nsave) == 0 || n == nt ? write_solution_to_hdf5(op, u₁, n+1, h5ϕ, h5ω) : nothing
-        u₀ .= u₁
-
-        mod(n, 10*nsave) == 0 ? flush(h5) : nothing
-    end
-
-
-    # close HDF5 output file
-    close(h5)
-
-end
-
-
-@generated function write_solution_to_hdf5(op::CollisionOperator{M,N,ℳ,𝒩,RT,CT}, u::Matrix{RT}, n::Int, h5ϕ::HDF5Dataset, h5ω::HDF5Dataset) where {M,N,ℳ,𝒩,RT,CT}
-    local û::Matrix{CT} = zeros(CT,ℳ,𝒩)
-    local ϕ̂::Matrix{CT} = zeros(CT,ℳ,𝒩)
-    local ϕ::Matrix{RT} = zeros(RT,M,N)
-
-    quote
-        prfft!(op.ft, u, $û)
-        $ϕ̂ .= op.Δ⁻¹ .* $û
-        irfft!(op.ft, $ϕ̂, $ϕ)
-
-        h5ϕ[:,:,n] = $ϕ
-        h5ω[:,:,n] = u
-    end
 end
