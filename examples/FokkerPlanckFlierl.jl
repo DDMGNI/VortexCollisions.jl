@@ -1,8 +1,10 @@
 
+using Distributed
+
 # to run in parallel set environment variable JULIA_NUM_THREADS to > 1
 if haskey(ENV, "JULIA_NUM_THREADS")
     nw = parse(Int, ENV["JULIA_NUM_THREADS"])
-    addprocs(nw)
+    addprocs(nw; exeflags="--project")
 end
 
 
