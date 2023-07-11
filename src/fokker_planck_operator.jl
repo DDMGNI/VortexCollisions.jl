@@ -12,6 +12,7 @@ struct FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT} <: CollisionOperator{M,
 
     Du::Vector{SharedArray{RT,2}}
     Dh::Vector{SharedArray{RT,2}}
+    h::SharedArray{RT,2}
     m::SharedArray{RT,2}
 
     Dû::Vector{SharedArray{CT,2}}
@@ -29,6 +30,7 @@ struct FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT} <: CollisionOperator{M,
 
         Du = [SharedArray{RT}((M,N)), SharedArray{RT}((M,N))]
         Dh = [SharedArray{RT}((M,N)), SharedArray{RT}((M,N))]
+        h  = SharedArray{RT}((M,N))
         m  = SharedArray{RT}((M,N))
 
         Dû = [SharedArray{CT}((ℳ,𝒩)), SharedArray{CT}((ℳ,𝒩))]
@@ -38,7 +40,7 @@ struct FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT,HT,MT,WT} <: CollisionOperator{M,
         𝔽 = [SharedArray{RT}((M,N)), SharedArray{RT}((M,N))]
         𝔻 = [SharedArray{RT}((M,N)) for k ∈ 1:2, l ∈ 1:2]
 
-        new(grid, ft, D, Δ⁻¹, hfunc, mfunc, wfunc, Du, Dh, m, Dû, Dĥ, m̂, 𝔽, 𝔻)
+        new(grid, ft, D, Δ⁻¹, hfunc, mfunc, wfunc, Du, Dh, h, m, Dû, Dĥ, m̂, 𝔽, 𝔻)
     end
 end
 
@@ -62,6 +64,7 @@ function initialize_workers(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT}, ℳcut
 
     local gDh = op.Dh
     local gDu = op.Du
+    local gh  = op.h
     local gm  = op.m
 
     local gDû = op.Dû
@@ -83,6 +86,7 @@ function initialize_workers(op::FokkerPlanckOperator{M,N,ℳ,𝒩,RT,CT}, ℳcut
 
             global Dh = gDh
             global Du = gDu
+            global h  = gh
             global m  = gm
 
             global Dû = gDû
@@ -181,6 +185,8 @@ end
         op.hfunc(u, $ϕ, $h, op.grid)
         frfft!(op.ft, $h, $ĥ)
 
+        op.h .= $h
+        
         apply_operator!(op.D, $û, op.Dû)
         apply_operator!(op.D, $ĥ, op.Dĥ)
 
