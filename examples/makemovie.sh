@@ -1,7 +1,7 @@
 #!/bin/bash
 
-img="FokkerPlanck_sinx4sinyetc_dt1E-3_nt10000_movie_"
-out="FokkerPlanck_sinx4sinyetc_dt1E-3_nt10000.mp4"
+img="FokkerPlanck_exp_cos_dt1E-6_nt100_movie_"
+out="FokkerPlanck_exp_cos_dt1E-6_nt100.mp4"
 
 opt="vbitrate=5000000:mbd=2:keyint=132:v4mv:vqmin=3:lumi_mask=0.07:dark_mask=0.2:mpeg_quant:scplx_mask=0.1:tcplx_mask=0.1:naq"
 

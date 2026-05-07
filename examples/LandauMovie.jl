@@ -1,5 +1,6 @@
 
-runid = "Landau_dt1E-6_nt10000"
+# runid = "Landau_dt1E-6_nt10000"
+runid = "Landau_dt2E-6_nt25000"
 
 
 using PyCall
