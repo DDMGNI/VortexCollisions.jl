@@ -16,8 +16,21 @@ reasoning that makes it worth keeping.
 
 ### New Features
 
+- **Continuous integration.** The repository had no `.github` directory at all; it now carries the
+  same `CI.yml`, `CompatHelper.yml`, `Documenter.yml` and `TagBot.yml` as every other repository in
+  the tree — the test suite over two Julia versions and three operating systems, a doctest job, and
+  coverage reporting.
+- **A documentation build.** `docs/` previously held one untracked PDF; it now has `make.jl`,
+  `Project.toml` and a two-page manual, so `Documenter` has something to build and to deploy.
+
 ### Bug Fixes
 
 ### Breaking Changes
+
+- **A `[compat]` section, where there was none.** `julia = "1.10"` — the LTS and the floor across
+  the tree, and the field the CI matrix resolves its lower entry from — plus bounds for the four
+  non-stdlib dependencies: `AbstractFFTs = "1"`, `FFTW = "1"`, `HDF5 = "0.17"`,
+  `ProgressMeter = "1"`, matching what the manifest resolves today. An unbounded dependency is free
+  to break the package on its next breaking release.
 
 ## Open Issues
