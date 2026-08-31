@@ -3,11 +3,11 @@ function testGradient()
     M = 32
     N = 64
 
-    grid = Grid2d(M,N)
-    ft   = FourierTransform(grid)
-    D    = get_gradient(ft)
+    grid = Grid2d(M, N)
+    ft = FourierTransform(grid)
+    D = get_gradient(ft)
 
-    u  = get_field(grid)
+    u = get_field(grid)
     ux = zero(u)
     uy = zero(u)
 
@@ -28,17 +28,15 @@ function testGradient()
 
     @test maximum(abs.(ux - uxfft)) ≈ zero(eltype(u)) atol=1E-12
     @test maximum(abs.(uy - uyfft)) ≈ zero(eltype(u)) atol=1E-12
-
 end
-
 
 function testInverseLaplacian()
     M = 32
     N = 64
 
-    grid = Grid2d(M,N)
-    ft   = FourierTransform(grid)
-    Δ⁻¹  = get_inverse_laplacian(ft)
+    grid = Grid2d(M, N)
+    ft = FourierTransform(grid)
+    Δ⁻¹ = get_inverse_laplacian(ft)
 
     u = get_field(grid)
     f = get_field(grid)
@@ -57,10 +55,10 @@ function testInverseLaplacian()
     apply_operator!(Δ⁻¹, fhat, Δ⁻¹fhat)
 
     u₀hat = zero(uhat)
-    u₀hat[1,1] = uhat[1,1]
+    u₀hat[1, 1] = uhat[1, 1]
 
     Δ⁻¹f_fft = zero(u)
-    u₀fft    = zero(u)
+    u₀fft = zero(u)
 
     irfft!(ft, Δ⁻¹fhat, Δ⁻¹f_fft)
     irfft!(ft, u₀hat, u₀fft)
@@ -68,9 +66,7 @@ function testInverseLaplacian()
     Δ⁻¹f_ana = u .- u₀fft
 
     @test maximum(abs.(Δ⁻¹f_ana - Δ⁻¹f_fft)) ≈ zero(eltype(f)) atol=1E-14
-
 end
-
 
 testGradient()
 testInverseLaplacian()

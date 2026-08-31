@@ -2,7 +2,6 @@
 using VortexCollisions
 using Test
 
-
 include("test_functions.jl")
 
 include("test_grid.jl")

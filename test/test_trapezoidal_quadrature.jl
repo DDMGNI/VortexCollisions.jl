@@ -1,6 +1,6 @@
 
 function u_test(x, y, σ)
-    exp( - ( (x-π)^2 + (y-π)^2 ) / (2σ^2) )
+    exp(- ((x-π)^2 + (y-π)^2) / (2σ^2))
 end
 
 function testTrapezoidalQuadrature()
@@ -9,12 +9,12 @@ function testTrapezoidalQuadrature()
 
     σ = 0.5
 
-    grid = Grid2d(M,N)
-    u    = get_field(grid)
+    grid = Grid2d(M, N)
+    u = get_field(grid)
 
     for i in 1:M
         for j in 1:N
-            u[i,j]  = u_test(grid.x[i], grid.y[j], σ)
+            u[i, j] = u_test(grid.x[i], grid.y[j], σ)
         end
     end
 
@@ -22,6 +22,5 @@ function testTrapezoidalQuadrature()
 
     @test uint - π*σ^2 ≈ zero(eltype(u)) atol=1E-14
 end
-
 
 testTrapezoidalQuadrature()
