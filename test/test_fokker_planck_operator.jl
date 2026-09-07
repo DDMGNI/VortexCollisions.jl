@@ -7,15 +7,15 @@ function u_test2(x, y)
     cos(x) - cos(y)
 end
 
-function mfunc_one!(u, m)
+function mfunc_one!(u, m, grid)
     m .= 1
 end
 
-function hfunc_u!(u, ϕ, h)
+function hfunc_u!(u, ϕ, h, grid)
     h .= u
 end
 
-function hfunc_ϕ!(u, ϕ, h)
+function hfunc_ϕ!(u, ϕ, h, grid)
     h .= ϕ
 end
 
