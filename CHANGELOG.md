@@ -22,6 +22,12 @@ reasoning that makes it worth keeping.
   coverage reporting.
 - **A documentation build.** `docs/` previously held one untracked PDF; it now has `make.jl`,
   `Project.toml` and a two-page manual, so `Documenter` has something to build and to deploy.
+  That PDF — `effective_collision_operatos.pdf`, a personal note from April 2017 on a
+  pseudospectral algorithm for the collision operators of Morrison, *Physica D* 1986 — **has now
+  moved to `Projects/Metriplectic Relaxation/`**, whose subject it is. Nothing referenced it:
+  neither `make.jl` nor any page under `docs/src` mentions it, so the documentation build is
+  unaffected. It was tracked only by the commit that added this documentation build, and it is
+  in `git log` from there.
 
 ### Bug Fixes
 
